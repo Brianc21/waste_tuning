@@ -1,0 +1,52 @@
+{
+  "queries": [
+    {
+      "id": "active-config-version",
+      "name": "Active Config Version",
+      "description": "Shows the currently active configuration version",
+      "category": "onLoad",
+      "isBatch": false,
+      "sql": "SELECT [VersionID], [VersionName], [Comment], [CreatedBy], [CreatedOnUTC], [IsActive], [ActivatedBy], [ActivatedOnUTC], [IsLocked], [LockedBy], [LockedOnUTC], [IsProtected], [ProtectedBy], [ProtectedOnUTC], [ClonedFromVersionID] FROM [WASTE_HEB].[config].[ConfigVersions] WHERE IsActive = 1"
+    },
+    {
+      "id": "max-config-version",
+      "name": "MAX Config Version",
+      "description": "Shows the highest VersionID (most recently created version)",
+      "category": "onLoad",
+      "isBatch": false,
+      "sql": "SELECT [VersionID], [VersionName], [Comment], [CreatedBy], [CreatedOnUTC], [IsActive], [ActivatedBy], [ActivatedOnUTC], [IsLocked], [LockedBy], [LockedOnUTC], [IsProtected], [ProtectedBy], [ProtectedOnUTC], [ClonedFromVersionID] FROM [WASTE_HEB].[config].[ConfigVersions] WHERE VersionID = (SELECT MAX(VersionID) FROM [WASTE_HEB].[config].[ConfigVersions])"
+    },
+    {
+      "id": "current-default-markdowns",
+      "name": "Current Default Markdowns",
+      "description": "PPG Cluster markdown percentages with dynamic pivot by DaysToExpiry/HoursToSell/MinQty",
+      "category": "dashboard",
+      "isBatch": true,
+      "sql": "/*******************************************************************************\nPART 1: DATA COLLECTION\n*******************************************************************************/\n\n-- Cleanup\nIF OBJECT_ID('tempdb..#All_Tune') IS NOT NULL DROP TABLE #All_Tune;\nIF OBJECT_ID('tempdb..#Unique_PPGClusterID') IS NOT NULL DROP TABLE #Unique_PPGClusterID;\nIF OBJECT_ID('tempdb..##PivotBase') IS NOT NULL DROP TABLE ##PivotBase;\n\n-- 1. Get current version\nDECLARE @CurrentVersion INT = (\n    SELECT [VersionID]\n    FROM [WASTE_HEB].[config].[ConfigVersions]\n    WHERE IsActive = 1\n);\n\n-- 2. Identify the primary hierarchy for each PPG\nWITH RankedItems AS (\n    SELECT\n        i.PPGClusterID,\n        i.HierarchyLevel5ID,\n        iml.HierarchyLevel5Name,\n        i.HierarchyLevel4ID,\n        iml.HierarchyLevel4Name,\n        i.HierarchyLevel3ID,\n        iml.HierarchyLevel3Name,\n        i.HierarchyLevel2ID,\n        iml.HierarchyLevel2Name,\n        i.HierarchyLevel1ID,\n        iml.HierarchyLevel1Name,\n        COUNT(iml.UniqueItemID) AS CountOfItems,\n        ROW_NUMBER() OVER (PARTITION BY i.PPGClusterID ORDER BY COUNT(iml.UniqueItemID) DESC) AS rn\n    FROM [WASTE_HEB].[dbo].[Item] i\n    LEFT JOIN [WASTE_HEB].[dbo].[ItemML] iml ON i.UniqueItemID = iml.UniqueItemID\n    GROUP BY\n        i.PPGClusterID,\n        i.HierarchyLevel5ID, iml.HierarchyLevel5Name,\n        i.HierarchyLevel4ID, iml.HierarchyLevel4Name,\n        i.HierarchyLevel3ID, iml.HierarchyLevel3Name,\n        i.HierarchyLevel2ID, iml.HierarchyLevel2Name,\n        i.HierarchyLevel1ID, iml.HierarchyLevel1Name\n)\nSELECT * INTO #Unique_PPGClusterID\nFROM RankedItems\nWHERE rn = 1;\n\n-- 3. Populate #All_Tune with source tables\nSELECT\n    f.PPGClusterID,\n    f.StoreClusterID,\n    f.DaysToExpiry,\n    f.MinQty,\n    f.HoursToSell,\n    f.ReductionPct,\n    dp.Scalar AS Default_Scalar,\n    dp.GeneratedScalar,\n    dp.ConfiguredScalar,\n    dte.Scalar AS DTE1_Scalar,\n    cfgdp.ConfigValue,\n    cfgdp.ConfigOperationType,\n    ip.HierarchyLevel4Name,\n    ip.HierarchyLevel3Name,\n    ip.HierarchyLevel2Name,\n    ip.HierarchyLevel1Name\nINTO #All_Tune\nFROM [WASTE_HEB].wmd.ScalarFinalPercentage f\nLEFT JOIN #Unique_PPGClusterID ip ON f.PPGClusterID = ip.PPGClusterID\nLEFT JOIN [WASTE_HEB].wmd.ScalarDefaultPercentage dp ON f.PPGClusterID = dp.PPGClusterID\nLEFT JOIN (\n    SELECT PPGClusterID, DaysToExpiry, Scalar\n    FROM [WASTE_HEB].wmd.ScalarDaysToExpiry\n    WHERE DaysToExpiry = 1\n) dte ON f.PPGClusterID = dte.PPGClusterID\nLEFT JOIN (\n    SELECT PPGClusterID, ConfigValue, ConfigOperationType, VersionID\n    FROM [WASTE_HEB].[config].[DefaultPercentage]\n    WHERE VersionID = @CurrentVersion\n) cfgdp ON f.PPGClusterID = cfgdp.PPGClusterID\nWHERE f.MinQty IN (1,2,5,11,20)\n  AND f.HoursToSell IN (3, 6, 10, 99)\n  AND f.DaysToExpiry IN (0,1,2);\n\n/*******************************************************************************\nPART 2: DYNAMIC PIVOT (Collapsed to PPG Level)\n*******************************************************************************/\n\n-- 1. Create the base and COLLAPSE multiple stores/days into a single average per PPG/Config\nSELECT\n    HierarchyLevel4Name,\n    HierarchyLevel3Name,\n    HierarchyLevel2Name,\n    HierarchyLevel1Name,\n    PPGClusterID,\n    Default_Scalar,\n    GeneratedScalar,\n    ConfiguredScalar,\n    ConfigValue,\n    ConfigOperationType,\n    DTE1_Scalar,\n    DaysToExpiry,\n    HoursToSell,\n    MinQty,\n    'D' + CAST(DaysToExpiry AS VARCHAR) + '_H' + CAST(HoursToSell AS VARCHAR) + '_M' + CAST(MinQty AS VARCHAR) as ConfigKey,\n    AVG(ReductionPct) as AvgReductionPct\nINTO ##PivotBase\nFROM #All_Tune\nWHERE StoreClusterID <> -1\n  AND PPGClusterID IN ('677','678','679','702','9227','9228','9229','9230','9231','9470','1098','769','771','9360','9361','9362','9363','9364','9365','9366','9367','9368','9437','9217','9233','1140','1141','1142','1143','1144','1284','1298','1300','1309','1328','1338','496','11','1519','1520','1521','1533','1552','12','1201','1431','1043','1044','1599','480','481','5335','5336','5337','8794','5332','5333','1316','5160','5161','5162','5164','5166','5170','8705','8758','8759','8760','8761','8762','8767','8768','8769','8770','8771','8772','8788','8815','455','456','457','458','467','8791','4621','8808','8813','8821','8822','8825','8810','8823','8824','5361','5416','8773','4626','5353','5364','8809','8814','5389','5391','5393','5405')\nGROUP BY\n    HierarchyLevel4Name,\n    HierarchyLevel3Name,\n    HierarchyLevel2Name,\n    HierarchyLevel1Name,\n    PPGClusterID,\n    Default_Scalar,\n    GeneratedScalar,\n    ConfiguredScalar,\n    ConfigValue,\n    ConfigOperationType,\n    DTE1_Scalar,\n    DaysToExpiry,\n    HoursToSell,\n    MinQty;\n\n-- 2. Build the columns with exact sort\nDECLARE @Cols NVARCHAR(MAX) = STUFF((\n    SELECT ', ' + QUOTENAME(ConfigKey)\n    FROM (SELECT DISTINCT ConfigKey, DaysToExpiry, HoursToSell, MinQty FROM ##PivotBase) AS SortTable\n    ORDER BY DaysToExpiry ASC, HoursToSell ASC, MinQty DESC\n    FOR XML PATH(''), TYPE).value('.', 'NVARCHAR(MAX)'\n), 1, 2, '');\n\n-- 3. Execute the Final Flattened Pivot\nDECLARE @SQL NVARCHAR(MAX) = '\nSELECT\n    HierarchyLevel4Name,\n    HierarchyLevel3Name,\n    HierarchyLevel2Name,\n    HierarchyLevel1Name,\n    PPGClusterID,\n    Default_Scalar,\n    GeneratedScalar,\n    ConfiguredScalar,\n    ConfigValue,\n    ConfigOperationType,\n    DTE1_Scalar,\n    ' + @Cols + '\nFROM (\n    SELECT\n        HierarchyLevel4Name,\n        HierarchyLevel3Name,\n        HierarchyLevel2Name,\n        HierarchyLevel1Name,\n        PPGClusterID,\n        Default_Scalar,\n        GeneratedScalar,\n        ConfiguredScalar,\n        ConfigValue,\n        ConfigOperationType,\n        DTE1_Scalar,\n        ConfigKey,\n        AvgReductionPct\n    FROM ##PivotBase\n) AS SourceTable\nPIVOT (\n    MAX(AvgReductionPct)\n    FOR ConfigKey IN (' + @Cols + ')\n) AS pvt\nORDER BY HierarchyLevel4Name, HierarchyLevel3Name, HierarchyLevel2Name, HierarchyLevel1Name, PPGClusterID;'\n;\n\nEXEC sp_executesql @SQL;\n\n-- Final Cleanup\nIF OBJECT_ID('tempdb..##PivotBase') IS NOT NULL DROP TABLE ##PivotBase;"
+    },
+    {
+      "id": "all-config-versions",
+      "name": "All Config Versions",
+      "description": "List all configuration versions",
+      "category": "preset",
+      "isBatch": false,
+      "sql": "SELECT [VersionID], [VersionName], [Comment], [CreatedBy], [CreatedOnUTC], [IsActive], [IsLocked], [IsProtected], [ClonedFromVersionID] FROM [WASTE_HEB].[config].[ConfigVersions] ORDER BY [CreatedOnUTC] DESC"
+    },
+    {
+      "id": "locked-versions",
+      "name": "Locked Versions",
+      "description": "Show all locked configuration versions",
+      "category": "preset",
+      "isBatch": false,
+      "sql": "SELECT [VersionID], [VersionName], [LockedBy], [LockedOnUTC], [Comment] FROM [WASTE_HEB].[config].[ConfigVersions] WHERE IsLocked = 1 ORDER BY [LockedOnUTC] DESC"
+    },
+    {
+      "id": "table-row-counts",
+      "name": "Table Row Counts",
+      "description": "Row counts for all tables in WASTE_HEB",
+      "category": "preset",
+      "isBatch": false,
+      "sql": "SELECT s.name AS schema_name, t.name AS table_name, p.rows AS row_count FROM [WASTE_HEB].sys.tables t INNER JOIN [WASTE_HEB].sys.schemas s ON t.schema_id = s.schema_id INNER JOIN [WASTE_HEB].sys.partitions p ON t.object_id = p.object_id WHERE p.index_id IN (0, 1) ORDER BY p.rows DESC"
+    }
+  ]
+}

@@ -1,0 +1,246 @@
+{
+  "brand": {
+    "name": "Retail Insight",
+    "version": "1.0",
+    "date": "November 2024",
+    "website": "retailinsight.io"
+  },
+
+  "logos": {
+    "primary": {
+      "description": "Wordmark with play-button style icon mark",
+      "variants": [
+        { "name": "Light", "background": "#E5E7EC", "textColor": "#05053B", "iconColor": "#4C7EFF" },
+        { "name": "Dark", "background": "#05053B", "textColor": "#FFFFFF", "iconColor": "#4C7EFF" }
+      ]
+    },
+    "secondary": {
+      "description": "Icon mark only",
+      "variants": [
+        { "name": "Light", "background": "#E5E7EC" },
+        { "name": "Dark", "background": "#05053B" }
+      ]
+    },
+    "favicon": {
+      "variants": [
+        { "name": "Light", "background": "#FFFFFF" },
+        { "name": "Dark", "background": "#05053B" }
+      ]
+    },
+    "socialDefault": {
+      "shape": "circle",
+      "variants": [
+        { "name": "Light", "background": "#FFFFFF" },
+        { "name": "Dark", "background": "#05053B" }
+      ]
+    }
+  },
+
+  "colors": {
+    "primary": {
+      "navy": {
+        "name": "Navy",
+        "hex": "#05053B",
+        "rgb": { "r": 5, "g": 5, "b": 59 },
+        "cmyk": { "c": 100, "m": 95, "y": 43, "k": 59 },
+        "tints": {
+          "120": { "hex": "#030326", "rgb": { "r": 3, "g": 3, "b": 38 }, "cmyk": { "c": 100, "m": 92, "y": 48, "k": 76 } },
+          "75":  { "hex": "#45456E", "rgb": { "r": 69, "g": 69, "b": 110 }, "cmyk": { "c": 82, "m": 74, "y": 31, "k": 18 } },
+          "50":  { "hex": "#82829E", "rgb": { "r": 130, "g": 130, "b": 158 }, "cmyk": { "c": 55, "m": 46, "y": 23, "k": 6 } },
+          "20":  { "hex": "#C2C2CF", "rgb": { "r": 194, "g": 194, "b": 207 }, "cmyk": { "c": 28, "m": 22, "y": 13, "k": 1 } }
+        }
+      },
+      "blue": {
+        "name": "Blue",
+        "hex": "#4C7EFF",
+        "rgb": { "r": 76, "g": 126, "b": 255 },
+        "cmyk": { "c": 74, "m": 53, "y": 0, "k": 0 },
+        "tints": {
+          "120": { "hex": "#295CCF", "rgb": { "r": 41, "g": 92, "b": 207 }, "cmyk": { "c": 86, "m": 64, "y": 0, "k": 0 } },
+          "75":  { "hex": "#789EFF", "rgb": { "r": 120, "g": 158, "b": 255 }, "cmyk": { "c": 56, "m": 36, "y": 0, "k": 0 } },
+          "50":  { "hex": "#A6BFFF", "rgb": { "r": 166, "g": 195, "b": 255 }, "cmyk": { "c": 39, "m": 21, "y": 0, "k": 0 } },
+          "20":  { "hex": "#D1DEFF", "rgb": { "r": 209, "g": 222, "b": 255 }, "cmyk": { "c": 20, "m": 11, "y": 0, "k": 0 } }
+        }
+      },
+      "grey": {
+        "name": "Grey",
+        "hex": "#E5E7EC",
+        "rgb": { "r": 229, "g": 231, "b": 236 },
+        "cmyk": { "c": 12, "m": 7, "y": 6, "k": 0 },
+        "tints": {
+          "120": { "hex": "#A6A6A8", "rgb": { "r": 166, "g": 166, "b": 168 }, "cmyk": { "c": 37, "m": 29, "y": 28, "k": 7 } },
+          "75":  { "hex": "#EDEDF2", "rgb": { "r": 237, "g": 237, "b": 242 }, "cmyk": { "c": 8, "m": 6, "y": 4, "k": 0 } },
+          "50":  { "hex": "#F2F2F5", "rgb": { "r": 242, "g": 242, "b": 245 }, "cmyk": { "c": 6, "m": 4, "y": 3, "k": 0 } },
+          "20":  { "hex": "#FAFAFA", "rgb": { "r": 250, "g": 250, "b": 250 }, "cmyk": { "c": 2, "m": 2, "y": 2, "k": 0 } }
+        }
+      }
+    },
+    "secondary": {
+      "lime": {
+        "name": "Lime",
+        "hex": "#BAF007",
+        "rgb": { "r": 186, "g": 240, "b": 7 },
+        "cmyk": { "c": 37, "m": 0, "y": 100, "k": 0 },
+        "tints": {
+          "120": { "hex": "#91B205", "rgb": { "r": 145, "g": 178, "b": 5 }, "cmyk": { "c": 51, "m": 10, "y": 100, "k": 1 } },
+          "75":  { "hex": "#CCF545", "rgb": { "r": 204, "g": 245, "b": 69 }, "cmyk": { "c": 30, "m": 0, "y": 85, "k": 0 } },
+          "50":  { "hex": "#DEF782", "rgb": { "r": 222, "g": 247, "b": 130 }, "cmyk": { "c": 20, "m": 0, "y": 61, "k": 0 } },
+          "25":  { "hex": "#EDFAC2", "rgb": { "r": 237, "g": 250, "b": 194 }, "cmyk": { "c": 11, "m": 0, "y": 32, "k": 0 } }
+        }
+      },
+      "orange": {
+        "name": "Orange",
+        "hex": "#FFB71D",
+        "rgb": { "r": 255, "g": 183, "b": 29 },
+        "cmyk": { "c": 0, "m": 33, "y": 89, "k": 0 },
+        "tints": {
+          "120": { "hex": "#E0991A", "rgb": { "r": 224, "g": 153, "b": 26 }, "cmyk": { "c": 11, "m": 44, "y": 95, "k": 2 } },
+          "75":  { "hex": "#FFC957", "rgb": { "r": 255, "g": 201, "b": 87 }, "cmyk": { "c": 0, "m": 24, "y": 73, "k": 0 } },
+          "50":  { "hex": "#FFDB8F", "rgb": { "r": 255, "g": 219, "b": 143 }, "cmyk": { "c": 0, "m": 16, "y": 52, "k": 0 } },
+          "25":  { "hex": "#FFEDC7", "rgb": { "r": 255, "g": 237, "b": 199 }, "cmyk": { "c": 0, "m": 7, "y": 28, "k": 0 } }
+        }
+      },
+      "hotPink": {
+        "name": "Hot Pink",
+        "hex": "#FF4C70",
+        "rgb": { "r": 255, "g": 76, "b": 112 },
+        "cmyk": { "c": 0, "m": 81, "y": 35, "k": 0 },
+        "tints": {
+          "120": { "hex": "#CF1C45", "rgb": { "r": 207, "g": 28, "b": 69 }, "cmyk": { "c": 12, "m": 98, "y": 61, "k": 3 } },
+          "75":  { "hex": "#FF7894", "rgb": { "r": 255, "g": 120, "b": 148 }, "cmyk": { "c": 0, "m": 66, "y": 21, "k": 0 } },
+          "50":  { "hex": "#FFA6B8", "rgb": { "r": 255, "g": 166, "b": 184 }, "cmyk": { "c": 0, "m": 47, "y": 13, "k": 0 } },
+          "25":  { "hex": "#FFD1DB", "rgb": { "r": 255, "g": 209, "b": 219 }, "cmyk": { "c": 0, "m": 26, "y": 6, "k": 0 } }
+        }
+      },
+      "ocean": {
+        "name": "Ocean",
+        "hex": "#3DD4ED",
+        "rgb": { "r": 61, "g": 212, "b": 237 },
+        "cmyk": { "c": 61, "m": 0, "y": 11, "k": 0 },
+        "tints": {
+          "120": { "hex": "#17B0BF", "rgb": { "r": 23, "g": 176, "b": 191 }, "cmyk": { "c": 73, "m": 4, "y": 27, "k": 0 } },
+          "75":  { "hex": "#6EDEF2", "rgb": { "r": 110, "g": 222, "b": 242 }, "cmyk": { "c": 52, "m": 0, "y": 10, "k": 0 } },
+          "50":  { "hex": "#9EEBF5", "rgb": { "r": 158, "g": 235, "b": 245 }, "cmyk": { "c": 39, "m": 0, "y": 10, "k": 0 } },
+          "25":  { "hex": "#CFF5FA", "rgb": { "r": 207, "g": 245, "b": 250 }, "cmyk": { "c": 22, "m": 0, "y": 6, "k": 0 } }
+        }
+      },
+      "ice": {
+        "name": "Ice",
+        "hex": "#BCF8FF",
+        "rgb": { "r": 188, "g": 248, "b": 255 },
+        "cmyk": { "c": 28, "m": 0, "y": 6, "k": 0 },
+        "tints": {
+          "120": { "hex": "#8ADBE0", "rgb": { "r": 138, "g": 219, "b": 224 }, "cmyk": { "c": 47, "m": 0, "y": 17, "k": 0 } },
+          "75":  { "hex": "#CCFAFF", "rgb": { "r": 204, "g": 250, "b": 255 }, "cmyk": { "c": 22, "m": 0, "y": 5, "k": 0 } },
+          "50":  { "hex": "#DEFCFF", "rgb": { "r": 222, "g": 252, "b": 255 }, "cmyk": { "c": 15, "m": 0, "y": 4, "k": 0 } },
+          "25":  { "hex": "#EDFCFF", "rgb": { "r": 237, "g": 252, "b": 255 }, "cmyk": { "c": 8, "m": 0, "y": 1, "k": 0 } }
+        }
+      }
+    }
+  },
+
+  "typography": {
+    "primary": {
+      "family": "Monte Stella",
+      "weights": [
+        { "name": "Medium", "usage": "Headlines, display text" },
+        { "name": "Regular", "usage": "Body, subheadings" }
+      ]
+    },
+    "secondary": {
+      "family": "Nexa",
+      "weights": [
+        { "name": "Bold", "usage": "Emphasis, CTAs" },
+        { "name": "Text", "usage": "Body copy, UI text" }
+      ]
+    }
+  },
+
+  "toneOfVoice": {
+    "personalities": [
+      {
+        "name": "Empathetic",
+        "description": "Recognizes the specific pain points and priorities of retail and CPG leaders and addresses them in a tactful, authentic way.",
+        "avoid": [
+          "Underplaying challenges — making light of the pressures faced by retail and CPG leaders",
+          "Overstating solutions — presenting products as a silver bullet to all retail problems"
+        ]
+      },
+      {
+        "name": "Human",
+        "description": "Accessible, honest, and plain-speaking. Sometimes witty. Avoids inflated claims or unnecessary complexity.",
+        "avoid": [
+          "Verbose — using overly complex language and sentence structures which exclude audiences",
+          "Robotic — using cookie-cutter B2B phrasing and marketing buzzwords"
+        ]
+      },
+      {
+        "name": "Progressive",
+        "description": "Passionate, inspiring, and positive. Excited by innovation and the possibilities of technology.",
+        "avoid": [
+          "Traditional — outdated terminology for people, processes and technology",
+          "Complacent — smugness or implying all answers are known"
+        ]
+      },
+      {
+        "name": "Rational",
+        "description": "Evidence-based claims, well-reasoned arguments, and precise language. Avoids hyperbole and marketing-speak.",
+        "avoid": [
+          "Pretentious — elaborate explanations and superfluous language",
+          "Arrogant — confidence based on subjective superiority rather than evidence"
+        ]
+      }
+    ]
+  },
+
+  "styleGuide": {
+    "language": "American English",
+    "proofreadingTools": ["Grammarly"],
+    "capitalization": {
+      "rule": "Only capitalize product titles and specific job titles. General nouns are lowercase.",
+      "productsCamelCase": [
+        "WasteInsight",
+        "AvailabilityInsight",
+        "PromoInsight",
+        "OnlineInsight",
+        "StoreInsight",
+        "RemodelInsight"
+      ],
+      "lowercaseNouns": [
+        "retailers",
+        "cognitive technology",
+        "advanced analytics",
+        "retail execution consultation",
+        "dynamic pricing algorithm",
+        "dynamic markdown software",
+        "retail ecosystem",
+        "consumer packaged goods"
+      ]
+    },
+    "headlines": {
+      "casing": "Sentence case — capitalize first word only, unless a capped noun appears"
+    },
+    "ctaButtons": {
+      "casing": "Sentence case unless featuring a capped noun",
+      "examples": ["Find out more", "Book your free consultation"]
+    },
+    "hyphens": {
+      "compoundAdjectives": ["on-shelf", "in-store", "data-driven", "sell-through"]
+    },
+    "brandPositioning": "Shelf Actualization",
+    "narrativeVoice": {
+      "default": "First person — 'We' and 'our'",
+      "formal": "Third person singular for press releases (e.g. 'Retail Insight is developing...' not 'Retail Insight are developing...')"
+    },
+    "partnerLanguage": "Refer to the brand's relationship with retailers and CPGs as 'partners'"
+  },
+
+  "products": [
+    "WasteInsight",
+    "AvailabilityInsight",
+    "PromoInsight",
+    "OnlineInsight",
+    "StoreInsight",
+    "RemodelInsight"
+  ]
+}
