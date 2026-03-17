@@ -22,6 +22,7 @@ function SettingsModal({ isOpen, onClose, currentConfig, onSave, onQueriesUpdate
   const [queryLoading, setQueryLoading] = useState(false)
   const [queryError, setQueryError] = useState(null)
   const [querySuccess, setQuerySuccess] = useState(null)
+  const [saveAsDefault, setSaveAsDefault] = useState(false)
 
   // Fetch config directly from API (fallback when prop is empty)
   const fetchConfig = async () => {
@@ -86,6 +87,7 @@ function SettingsModal({ isOpen, onClose, currentConfig, onSave, onQueriesUpdate
       setOriginalSql(query.sql)
       setQueryError(null)
       setQuerySuccess(null)
+      setSaveAsDefault(false)
     }
   }
 
@@ -120,8 +122,55 @@ function SettingsModal({ isOpen, onClose, currentConfig, onSave, onQueriesUpdate
     }
   }
 
+  const handleSaveQueryAsDefault = async () => {
+    if (!selectedQueryId) return
+
+    setQueryLoading(true)
+    setQueryError(null)
+    setQuerySuccess(null)
+
+    try {
+      // First save the query
+      const saveResponse = await axios.put(`${API_BASE_URL}/api/queries/${selectedQueryId}`, {
+        sql: editedSql
+      })
+
+      if (!saveResponse.data.success) {
+        setQueryError(saveResponse.data.error || 'Failed to save query')
+        return
+      }
+
+      // Then make it the default
+      const defaultResponse = await axios.put(`${API_BASE_URL}/api/queries/${selectedQueryId}/make-default`, {
+        sql: editedSql
+      })
+
+      if (defaultResponse.data.success) {
+        setQuerySuccess('Query saved and set as new default!')
+        setOriginalSql(editedSql)
+        setSaveAsDefault(false)
+        setQueries(queries.map(q =>
+          q.id === selectedQueryId ? { ...q, sql: editedSql } : q
+        ))
+        if (onQueriesUpdated) onQueriesUpdated()
+      } else {
+        setQueryError(defaultResponse.data.error || 'Saved but failed to set as default')
+      }
+    } catch (err) {
+      setQueryError(err.response?.data?.detail || err.message)
+    } finally {
+      setQueryLoading(false)
+    }
+  }
+
   const handleSaveQuery = async () => {
     if (!selectedQueryId) return
+
+    // If checkbox is ticked, delegate to save-as-default handler
+    if (saveAsDefault) {
+      await handleSaveQueryAsDefault()
+      return
+    }
 
     setQueryLoading(true)
     setQueryError(null)
@@ -170,6 +219,7 @@ function SettingsModal({ isOpen, onClose, currentConfig, onSave, onQueriesUpdate
         setEditedSql(resetQuery.sql)
         setOriginalSql(resetQuery.sql)
         setQuerySuccess('Query reset to default!')
+        setSaveAsDefault(false)
         // Update local state
         setQueries(queries.map(q => 
           q.id === selectedQueryId ? resetQuery : q
@@ -209,6 +259,7 @@ function SettingsModal({ isOpen, onClose, currentConfig, onSave, onQueriesUpdate
           }
         }
         setQuerySuccess('All queries reset to defaults!')
+        setSaveAsDefault(false)
         // Notify parent to reload queries
         if (onQueriesUpdated) onQueriesUpdated()
       } else {
@@ -522,7 +573,7 @@ function SettingsModal({ isOpen, onClose, currentConfig, onSave, onQueriesUpdate
                     Reset All to Defaults
                   </button>
                 </div>
-                <div style={{ display: 'flex', gap: '12px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                   <button
                     onClick={handleResetQuery}
                     disabled={queryLoading || !selectedQueryId}
@@ -552,6 +603,25 @@ function SettingsModal({ isOpen, onClose, currentConfig, onSave, onQueriesUpdate
                   >
                     Close
                   </button>
+                  <label style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    fontSize: '13px',
+                    color: '#555',
+                    cursor: hasChanges ? 'pointer' : 'not-allowed',
+                    opacity: hasChanges ? 1 : 0.5,
+                    userSelect: 'none'
+                  }}>
+                    <input
+                      type="checkbox"
+                      checked={saveAsDefault}
+                      onChange={(e) => setSaveAsDefault(e.target.checked)}
+                      disabled={!hasChanges}
+                      style={{ cursor: hasChanges ? 'pointer' : 'not-allowed' }}
+                    />
+                    Also save as default
+                  </label>
                   <button
                     onClick={handleSaveQuery}
                     disabled={queryLoading || !hasChanges}
@@ -559,14 +629,14 @@ function SettingsModal({ isOpen, onClose, currentConfig, onSave, onQueriesUpdate
                       padding: '10px 20px',
                       border: 'none',
                       borderRadius: '4px',
-                      background: queryLoading || !hasChanges ? '#ccc' : '#007bff',
+                      background: queryLoading || !hasChanges ? '#ccc' : saveAsDefault ? '#28a745' : '#007bff',
                       color: 'white',
                       cursor: queryLoading || !hasChanges ? 'not-allowed' : 'pointer',
                       fontSize: '14px',
                       fontWeight: '500'
                     }}
                   >
-                    {queryLoading ? 'Saving...' : 'Save Query'}
+                    {queryLoading ? 'Saving...' : saveAsDefault ? 'Save as Default' : 'Save Query'}
                   </button>
                 </div>
               </div>

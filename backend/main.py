@@ -353,6 +353,45 @@ async def update_query(query_id: str, query_data: dict = Body(...)):
         return {'success': False, 'error': str(e)}
 
 
+@app.put("/api/queries/{query_id}/make-default")
+async def make_query_default(query_id: str, query_data: dict = Body(...)):
+    """Save a query as the new default (so Reset returns to this version)."""
+    try:
+        new_sql = query_data.get('sql')
+        if not new_sql:
+            return {'success': False, 'error': 'No SQL provided'}
+
+        # Update current queries.json
+        data = load_queries()
+        queries = data.get('queries', [])
+        found = False
+        for i, q in enumerate(queries):
+            if q.get('id') == query_id:
+                queries[i]['sql'] = new_sql
+                found = True
+                break
+        if not found:
+            return {'success': False, 'error': f'Query {query_id} not found'}
+        data['queries'] = queries
+        save_queries(data)
+
+        # Also update the default queries.json so Reset returns this version
+        default_data = load_default_queries()
+        default_queries = default_data.get('queries', [])
+        for i, q in enumerate(default_queries):
+            if q.get('id') == query_id:
+                default_queries[i]['sql'] = new_sql
+                break
+        default_data['queries'] = default_queries
+        with open(QUERIES_DEFAULT_PATH, 'w', encoding='utf-8') as f:
+            json.dump(default_data, f, indent=2)
+
+        print(f'[QUERIES] Set new default for query: {query_id}')
+        return {'success': True, 'message': f'Query {query_id} saved as new default'}
+    except Exception as e:
+        return {'success': False, 'error': str(e)}
+
+
 @app.post("/api/queries/reset")
 async def reset_queries():
     """Reset all queries to defaults."""
