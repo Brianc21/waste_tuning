@@ -222,6 +222,14 @@ Click the **Settings** button (⚙️) to:
 
 The Settings modal will pre-populate with current values even if the database connection is failing, making it easy to fix connection issues.
 
+#### Query Editor — Save as Default
+
+When editing a query in the Query Editor tab, an **"Also save as default"** checkbox appears in the bottom-left corner (next to "Reset All to Defaults"). When checked:
+
+- The Save button turns green and reads **"Save as Default"**
+- Saving will update both the active query **and** the stored default
+- Future use of "Reset This Query" will restore to this new version instead of the original
+
 ## API Endpoints
 
 The backend exposes these endpoints:
@@ -237,6 +245,7 @@ The backend exposes these endpoints:
 - `POST /api/update` - Execute INSERT/UPDATE/DELETE
 - `GET /api/queries` - Get saved queries
 - `PUT /api/queries/{id}` - Update a saved query
+- `PUT /api/queries/{id}/make-default` - Save a query as the new default
 - `POST /api/queries/reset` - Reset queries to defaults
 
 Full API documentation available at `http://localhost:8000/docs`
@@ -423,6 +432,10 @@ See `build/BUILD_README.md` for detailed build instructions.
 - Axios - HTTP client
 
 ## Recent Updates
+
+### Version 1.5 (March 2026)
+- **Save as Default**: Added "Also save as default" checkbox to the Query Editor in Settings. When checked, saving a query also updates the stored default so that "Reset This Query" restores to the new version.
+- **Query Editor layout improvement**: All four action buttons are now in a single uniform row; the "Also save as default" checkbox sits right-aligned beneath the Save button for a cleaner layout.
 
 ### Version 1.4 (March 2026)
 - **Performance monitoring**: SQL Proxy now logs timing for connections and queries

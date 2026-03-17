@@ -3,7 +3,7 @@
 
 ---
 
-**Version:** 1.4  
+**Version:** 1.5  
 **Last Updated:** March 2026  
 **Internal Use Only** - Retail Insight / HEB Waste Management Team
 
@@ -18,8 +18,8 @@
 5. [Tuning Actions](#5-tuning-actions)
 6. [Executing Custom Queries](#6-executing-custom-queries)
 7. [Settings & Configuration](#7-settings--configuration)
-8. [Best Practices](#7-best-practices)
-9. [Troubleshooting](#8-troubleshooting)
+8. [Best Practices](#8-best-practices)
+9. [Troubleshooting](#9-troubleshooting)
 
 ---
 
@@ -430,13 +430,33 @@ View and modify your database connection settings:
 
 ## 7.3 Query Editor Tab
 
-View and modify the built-in SQL queries:
+View and modify the built-in SQL queries used by the dashboard.
 
-1. Select a query from the dropdown
-2. Edit the SQL in the text area
-3. Click **"Save Query"** to save changes
-4. Use **"Reset This Query"** to restore the default
-5. Use **"Reset All to Defaults"** to restore all queries
+### Editing a Query
+
+1. Select a query from the **Select Query** dropdown
+2. Edit the SQL in the text area — the label shows **(modified)** when there are unsaved changes
+3. Use the buttons at the bottom to save or discard your changes
+
+### Button Reference
+
+| Button | Description |
+|--------|-------------|
+| **Reset All to Defaults** | Restores every query to its original built-in version |
+| **Reset This Query** | Restores only the selected query to its default |
+| **Close** | Closes the Settings modal without saving |
+| **Save Query** | Saves your changes for this session |
+
+### Saving a Query as the New Default
+
+When you want your edited query to become the permanent default (so "Reset This Query" restores to your version instead of the original):
+
+1. Make your edits to the SQL
+2. Check the **"Also save as default"** checkbox in the bottom-left corner
+3. The Save button will turn green and read **"Save as Default"**
+4. Click **"Save as Default"**
+
+The checkbox is only enabled when there are unsaved changes. It clears automatically after a successful save.
 
 ---
 
@@ -648,6 +668,15 @@ If you encounter issues not covered here:
 | D | Divide | Value ÷ X |
 | O | Override | Value = X |
 
+## Query Editor — Save Options
+
+| Action | How |
+|--------|-----|
+| Save for this session only | Edit SQL → click **Save Query** |
+| Save as new permanent default | Edit SQL → check **"Also save as default"** → click **Save as Default** |
+| Restore this query to default | Click **Reset This Query** |
+| Restore all queries to defaults | Click **Reset All to Defaults** |
+
 ## File Locations
 
 ### Packaged Version
@@ -680,5 +709,5 @@ Watch the SQL Proxy console for timing:
 
 *End of Training Guide*
 
-**Document Version:** 1.4  
+**Document Version:** 1.5  
 **For questions or updates, contact the Retail Insight team.**
