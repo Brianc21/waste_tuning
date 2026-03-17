@@ -6,7 +6,7 @@
       "description": "Shows the currently active configuration version",
       "category": "onLoad",
       "isBatch": false,
-      "sql": "SELECT [VersionID], [VersionName], [Comment], [CreatedBy], [CreatedOnUTC], [IsActive], [ActivatedBy], [ActivatedOnUTC], [IsLocked], [LockedBy], [LockedOnUTC], [IsProtected], [ProtectedBy], [ProtectedOnUTC], [ClonedFromVersionID] FROM [WASTE_HEB].[config].[ConfigVersions] WHERE IsActive = 1"
+      "sql": "SELECT [VersionID], [VersionName], [Comment], [CreatedBy], [CreatedOnUTC], [IsActive], [ActivatedBy], [ActivatedOnUTC], [IsLocked], [LockedBy], [LockedOnUTC], [IsProtected], [ProtectedBy], [ProtectedOnUTC], [ClonedFromVersionID] FROM [WASTE_HEB].[config].[ConfigVersions] WHERE IsActive = 1 "
     },
     {
       "id": "max-config-version",

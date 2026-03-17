@@ -41,19 +41,15 @@ function SettingsModal({ isOpen, onClose, currentConfig, onSave, onQueriesUpdate
 
   useEffect(() => {
     if (isOpen) {
-      // Load database config from prop first, fallback to API fetch
       if (currentConfig && currentConfig.server) {
         setServer(currentConfig.server || '')
         setDatabase(currentConfig.database || '')
         setPort(currentConfig.port || '1433')
       } else {
-        // Prop is empty - fetch directly from API
         fetchConfig()
       }
       setDbError(null)
       setDbSuccess(null)
-      
-      // Load queries
       loadQueries()
     }
   }, [isOpen, currentConfig])
@@ -63,7 +59,6 @@ function SettingsModal({ isOpen, onClose, currentConfig, onSave, onQueriesUpdate
       const response = await axios.get(`${API_BASE_URL}/api/queries`)
       if (response.data.success) {
         setQueries(response.data.queries || [])
-        // Select first query by default
         if (response.data.queries?.length > 0 && !selectedQueryId) {
           const firstQuery = response.data.queries[0]
           setSelectedQueryId(firstQuery.id)
@@ -130,7 +125,6 @@ function SettingsModal({ isOpen, onClose, currentConfig, onSave, onQueriesUpdate
     setQuerySuccess(null)
 
     try {
-      // First save the query
       const saveResponse = await axios.put(`${API_BASE_URL}/api/queries/${selectedQueryId}`, {
         sql: editedSql
       })
@@ -140,7 +134,6 @@ function SettingsModal({ isOpen, onClose, currentConfig, onSave, onQueriesUpdate
         return
       }
 
-      // Then make it the default
       const defaultResponse = await axios.put(`${API_BASE_URL}/api/queries/${selectedQueryId}/make-default`, {
         sql: editedSql
       })
@@ -166,7 +159,6 @@ function SettingsModal({ isOpen, onClose, currentConfig, onSave, onQueriesUpdate
   const handleSaveQuery = async () => {
     if (!selectedQueryId) return
 
-    // If checkbox is ticked, delegate to save-as-default handler
     if (saveAsDefault) {
       await handleSaveQueryAsDefault()
       return
@@ -184,11 +176,9 @@ function SettingsModal({ isOpen, onClose, currentConfig, onSave, onQueriesUpdate
       if (response.data.success) {
         setQuerySuccess('Query saved successfully!')
         setOriginalSql(editedSql)
-        // Update local state
         setQueries(queries.map(q => 
           q.id === selectedQueryId ? { ...q, sql: editedSql } : q
         ))
-        // Notify parent to reload queries
         if (onQueriesUpdated) onQueriesUpdated()
       } else {
         setQueryError(response.data.error || 'Failed to save query')
@@ -220,11 +210,9 @@ function SettingsModal({ isOpen, onClose, currentConfig, onSave, onQueriesUpdate
         setOriginalSql(resetQuery.sql)
         setQuerySuccess('Query reset to default!')
         setSaveAsDefault(false)
-        // Update local state
         setQueries(queries.map(q => 
           q.id === selectedQueryId ? resetQuery : q
         ))
-        // Notify parent to reload queries
         if (onQueriesUpdated) onQueriesUpdated()
       } else {
         setQueryError(response.data.error || 'Failed to reset query')
@@ -250,7 +238,6 @@ function SettingsModal({ isOpen, onClose, currentConfig, onSave, onQueriesUpdate
 
       if (response.data.success) {
         setQueries(response.data.queries || [])
-        // Reset current selection
         if (response.data.queries?.length > 0) {
           const currentQuery = response.data.queries.find(q => q.id === selectedQueryId)
           if (currentQuery) {
@@ -260,7 +247,6 @@ function SettingsModal({ isOpen, onClose, currentConfig, onSave, onQueriesUpdate
         }
         setQuerySuccess('All queries reset to defaults!')
         setSaveAsDefault(false)
-        // Notify parent to reload queries
         if (onQueriesUpdated) onQueriesUpdated()
       } else {
         setQueryError(response.data.error || 'Failed to reset queries')
@@ -295,6 +281,18 @@ function SettingsModal({ isOpen, onClose, currentConfig, onSave, onQueriesUpdate
     borderRadius: '4px',
     fontSize: '14px',
     boxSizing: 'border-box'
+  }
+
+  // Shared style for all 4 query action buttons
+  const queryBtnBase = {
+    padding: '10px 16px',
+    borderRadius: '4px',
+    fontSize: '13px',
+    fontWeight: '500',
+    cursor: 'pointer',
+    whiteSpace: 'nowrap',
+    height: '40px',
+    boxSizing: 'border-box',
   }
 
   return (
@@ -496,10 +494,7 @@ function SettingsModal({ isOpen, onClose, currentConfig, onSave, onQueriesUpdate
                 <select
                   value={selectedQueryId}
                   onChange={(e) => handleQuerySelect(e.target.value)}
-                  style={{
-                    ...inputStyle,
-                    cursor: 'pointer'
-                  }}
+                  style={{ ...inputStyle, cursor: 'pointer' }}
                 >
                   {queries.map(q => (
                     <option key={q.id} value={q.id}>
@@ -554,91 +549,90 @@ function SettingsModal({ isOpen, onClose, currentConfig, onSave, onQueriesUpdate
                 />
               </div>
 
-              {/* Action buttons */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', gap: '12px' }}>
-                <div>
-                  <button
-                    onClick={handleResetAllQueries}
-                    disabled={queryLoading}
-                    style={{
-                      padding: '10px 16px',
-                      border: '1px solid #dc3545',
-                      borderRadius: '4px',
-                      background: 'white',
-                      color: '#dc3545',
-                      cursor: queryLoading ? 'not-allowed' : 'pointer',
-                      fontSize: '13px'
-                    }}
-                  >
-                    Reset All to Defaults
-                  </button>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                  <button
-                    onClick={handleResetQuery}
-                    disabled={queryLoading || !selectedQueryId}
-                    style={{
-                      padding: '10px 16px',
-                      border: '1px solid #6c757d',
-                      borderRadius: '4px',
-                      background: 'white',
-                      color: '#6c757d',
-                      cursor: queryLoading || !selectedQueryId ? 'not-allowed' : 'pointer',
-                      fontSize: '13px'
-                    }}
-                  >
-                    Reset This Query
-                  </button>
-                  <button
-                    onClick={onClose}
-                    style={{
-                      padding: '10px 16px',
-                      border: '1px solid #6c757d',
-                      borderRadius: '4px',
-                      background: 'white',
-                      color: '#6c757d',
-                      cursor: 'pointer',
-                      fontSize: '13px'
-                    }}
-                  >
-                    Close
-                  </button>
-                  <label style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '6px',
-                    fontSize: '13px',
-                    color: '#555',
-                    cursor: hasChanges ? 'pointer' : 'not-allowed',
-                    opacity: hasChanges ? 1 : 0.5,
-                    userSelect: 'none'
-                  }}>
-                    <input
-                      type="checkbox"
-                      checked={saveAsDefault}
-                      onChange={(e) => setSaveAsDefault(e.target.checked)}
-                      disabled={!hasChanges}
-                      style={{ cursor: hasChanges ? 'pointer' : 'not-allowed' }}
-                    />
-                    Also save as default
-                  </label>
-                  <button
-                    onClick={handleSaveQuery}
-                    disabled={queryLoading || !hasChanges}
-                    style={{
-                      padding: '10px 20px',
-                      border: 'none',
-                      borderRadius: '4px',
-                      background: queryLoading || !hasChanges ? '#ccc' : saveAsDefault ? '#28a745' : '#007bff',
-                      color: 'white',
-                      cursor: queryLoading || !hasChanges ? 'not-allowed' : 'pointer',
-                      fontSize: '14px',
-                      fontWeight: '500'
-                    }}
-                  >
-                    {queryLoading ? 'Saving...' : saveAsDefault ? 'Save as Default' : 'Save Query'}
-                  </button>
-                </div>
+              {/* Action buttons row */}
+              <div style={{
+                display: 'flex',
+                justifyContent: 'flex-end',
+                gap: '10px',
+                marginBottom: '8px'
+              }}>
+                <button
+                  onClick={handleResetAllQueries}
+                  disabled={queryLoading}
+                  style={{
+                    ...queryBtnBase,
+                    border: '1px solid #dc3545',
+                    background: 'white',
+                    color: '#dc3545',
+                    cursor: queryLoading ? 'not-allowed' : 'pointer',
+                    opacity: queryLoading ? 0.6 : 1,
+                  }}
+                >
+                  Reset All to Defaults
+                </button>
+                <button
+                  onClick={handleResetQuery}
+                  disabled={queryLoading || !selectedQueryId}
+                  style={{
+                    ...queryBtnBase,
+                    border: '1px solid #6c757d',
+                    background: 'white',
+                    color: '#6c757d',
+                    cursor: queryLoading || !selectedQueryId ? 'not-allowed' : 'pointer',
+                    opacity: queryLoading || !selectedQueryId ? 0.6 : 1,
+                  }}
+                >
+                  Reset This Query
+                </button>
+                <button
+                  onClick={onClose}
+                  style={{
+                    ...queryBtnBase,
+                    border: '1px solid #6c757d',
+                    background: 'white',
+                    color: '#6c757d',
+                    cursor: 'pointer',
+                  }}
+                >
+                  Close
+                </button>
+                <button
+                  onClick={handleSaveQuery}
+                  disabled={queryLoading || !hasChanges}
+                  style={{
+                    ...queryBtnBase,
+                    border: 'none',
+                    background: queryLoading || !hasChanges ? '#ccc' : saveAsDefault ? '#28a745' : '#007bff',
+                    color: 'white',
+                    cursor: queryLoading || !hasChanges ? 'not-allowed' : 'pointer',
+                  }}
+                >
+                  {queryLoading ? 'Saving...' : saveAsDefault ? 'Save as Default' : 'Save Query'}
+                </button>
+              </div>
+
+              {/* Checkbox right-aligned under Save Query button */}
+              <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                <label style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  fontSize: '13px',
+                  color: '#555',
+                  cursor: hasChanges ? 'pointer' : 'not-allowed',
+                  opacity: hasChanges ? 1 : 0.5,
+                  userSelect: 'none',
+                  whiteSpace: 'nowrap'
+                }}>
+                  <input
+                    type="checkbox"
+                    checked={saveAsDefault}
+                    onChange={(e) => setSaveAsDefault(e.target.checked)}
+                    disabled={!hasChanges}
+                    style={{ cursor: hasChanges ? 'pointer' : 'not-allowed' }}
+                  />
+                  Also save as default
+                </label>
               </div>
             </>
           )}
