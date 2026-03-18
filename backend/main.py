@@ -361,25 +361,19 @@ async def reset_single_query(query_id: str):
 
 @app.post("/api/tuning-session/save")
 async def save_tuning_session(request: SaveTuningSessionRequest):
-    """
-    Save (upsert) tuning session decisions to config.TuningSession.
-    Uses SQL Server's SYSTEM_USER for SavedBy.
-    """
+    """Save (upsert) tuning session decisions to config.TuningSession."""
     try:
         if not request.Rows:
             return {'success': False, 'error': 'No rows provided'}
-
         saved = 0
         errors = []
-
         for row in request.Rows:
             op_type = f"'{row.OperationType}'" if row.OperationType else 'NULL'
             config_val = str(row.ConfigValue) if row.ConfigValue is not None else 'NULL'
             comment = f"'{row.Comment.replace(chr(39), chr(39)*2)}'" if row.Comment else 'NULL'
-
             sql = f"""
 MERGE [WASTE_HEB].[config].[TuningSession] AS target
-USING (SELECT 
+USING (SELECT
     {request.VersionID} AS VersionID,
     {row.PPGClusterID} AS PPGClusterID,
     '{row.Action}' AS Action,
@@ -391,87 +385,337 @@ USING (SELECT
 ) AS source
 ON target.VersionID = source.VersionID AND target.PPGClusterID = source.PPGClusterID
 WHEN MATCHED THEN
-    UPDATE SET
-        Action = source.Action,
-        OperationType = source.OperationType,
-        ConfigValue = source.ConfigValue,
-        Comment = source.Comment,
-        SavedBy = source.SavedBy,
-        SavedOnUTC = source.SavedOnUTC
+    UPDATE SET Action = source.Action, OperationType = source.OperationType,
+               ConfigValue = source.ConfigValue, Comment = source.Comment,
+               SavedBy = source.SavedBy, SavedOnUTC = source.SavedOnUTC
 WHEN NOT MATCHED THEN
     INSERT (VersionID, PPGClusterID, Action, OperationType, ConfigValue, Comment, SavedBy, SavedOnUTC, IsSubmitted)
-    VALUES (source.VersionID, source.PPGClusterID, source.Action, source.OperationType, source.ConfigValue, source.Comment, source.SavedBy, source.SavedOnUTC, 0);
+    VALUES (source.VersionID, source.PPGClusterID, source.Action, source.OperationType,
+            source.ConfigValue, source.Comment, source.SavedBy, source.SavedOnUTC, 0);
 """
             try:
                 db.execute_batch_query(sql)
                 saved += 1
             except Exception as e:
                 errors.append(f"PPGClusterID {row.PPGClusterID}: {str(e)}")
-
         if errors:
             return {'success': False, 'error': f"Saved {saved} rows but {len(errors)} failed: {'; '.join(errors)}"}
-
         print(f'[TUNING SESSION] Saved {saved} rows for VersionID {request.VersionID}')
         return {'success': True, 'saved': saved}
+    except Exception as e:
+        return {'success': False, 'error': str(e)}
+
+
+@app.get("/api/tuning-session/conflicts/{max_version_id}/{active_version_id}")
+async def get_conflicts_and_proposed(max_version_id: int, active_version_id: int):
+    """
+    Returns conflicts and clean rows by running two separate queries and
+    classifying results in Python to avoid SQL CTE materialization issues.
+
+    QUERY 1: All PPGClusterIDs where MAX and Active DefaultPercentage differ,
+             joined with TuningSession. Classified as clean or conflict.
+
+    QUERY 2: TuningSession rows that say Change/Reset but DB configs now match
+             (stale session data). These are always conflicts.
+
+    Clean:
+      - DB says Change + TS says Change with matching Op+Value
+      - DB says Reset  + TS says Reset
+      - DB says Leave  + TS says Leave  (explicit session leave)
+
+    Conflict: everything else where versions differ or session is stale.
+    """
+    try:
+        # ------------------------------------------------------------------
+        # Query 1: All rows where MAX differs from Active, with TS joined
+        # ------------------------------------------------------------------
+        q1 = f"""
+SELECT
+    x.PPGClusterID,
+    x.DB_DerivedAction,
+    x.DB_OperationType,
+    x.DB_ConfigValue,
+    ts.Action           AS TS_Action,
+    ts.OperationType    AS TS_OperationType,
+    CAST(ts.ConfigValue AS FLOAT) AS TS_ConfigValue,
+    ts.SavedBy          AS TS_SavedBy,
+    CONVERT(VARCHAR(30), ts.SavedOnUTC, 120) AS TS_SavedOnUTC,
+    h.HierarchyLevel4Name,
+    h.HierarchyLevel3Name,
+    h.HierarchyLevel2Name,
+    h.HierarchyLevel1Name
+FROM (
+    -- Change: in MAX and differs from Active
+    SELECT
+        m.PPGClusterID,
+        'Change'                         AS DB_DerivedAction,
+        m.ConfigOperationType            AS DB_OperationType,
+        CAST(m.ConfigValue AS FLOAT)     AS DB_ConfigValue
+    FROM [WASTE_HEB].[config].[DefaultPercentage] m
+    LEFT JOIN [WASTE_HEB].[config].[DefaultPercentage] a
+        ON m.PPGClusterID = a.PPGClusterID AND a.VersionID = {active_version_id}
+    WHERE m.VersionID = {max_version_id}
+      AND (
+            a.PPGClusterID IS NULL
+            OR m.ConfigValue         <> a.ConfigValue
+            OR m.ConfigOperationType <> a.ConfigOperationType
+          )
+
+    UNION ALL
+
+    -- Reset: in Active but missing from MAX
+    SELECT
+        a.PPGClusterID,
+        'Reset'   AS DB_DerivedAction,
+        NULL      AS DB_OperationType,
+        NULL      AS DB_ConfigValue
+    FROM [WASTE_HEB].[config].[DefaultPercentage] a
+    WHERE a.VersionID = {active_version_id}
+      AND NOT EXISTS (
+            SELECT 1
+            FROM [WASTE_HEB].[config].[DefaultPercentage] m
+            WHERE m.PPGClusterID = a.PPGClusterID
+              AND m.VersionID    = {max_version_id}
+          )
+) x
+LEFT JOIN [WASTE_HEB].[config].[TuningSession] ts
+    ON x.PPGClusterID = ts.PPGClusterID AND ts.VersionID = {max_version_id}
+-- Join hierarchy for display in modal
+LEFT JOIN (
+    SELECT
+        i.PPGClusterID,
+        iml.HierarchyLevel4Name,
+        iml.HierarchyLevel3Name,
+        iml.HierarchyLevel2Name,
+        iml.HierarchyLevel1Name,
+        ROW_NUMBER() OVER (PARTITION BY i.PPGClusterID ORDER BY COUNT(iml.UniqueItemID) DESC) AS rn
+    FROM [WASTE_HEB].[dbo].[Item] i
+    LEFT JOIN [WASTE_HEB].[dbo].[ItemML] iml ON i.UniqueItemID = iml.UniqueItemID
+    GROUP BY i.PPGClusterID, iml.HierarchyLevel4Name, iml.HierarchyLevel3Name,
+             iml.HierarchyLevel2Name, iml.HierarchyLevel1Name
+) h ON x.PPGClusterID = h.PPGClusterID AND h.rn = 1
+ORDER BY x.PPGClusterID;
+"""
+
+        # ------------------------------------------------------------------
+        # Query 2: Stale TuningSession rows (TS says Change/Reset but
+        #          DB configs now match between versions)
+        # ------------------------------------------------------------------
+        q2 = f"""
+SELECT
+    ts.PPGClusterID,
+    'Leave'     AS DB_DerivedAction,
+    NULL        AS DB_OperationType,
+    NULL        AS DB_ConfigValue,
+    ts.Action   AS TS_Action,
+    ts.OperationType AS TS_OperationType,
+    CAST(ts.ConfigValue AS FLOAT) AS TS_ConfigValue,
+    ts.SavedBy  AS TS_SavedBy,
+    CONVERT(VARCHAR(30), ts.SavedOnUTC, 120) AS TS_SavedOnUTC,
+    h.HierarchyLevel4Name,
+    h.HierarchyLevel3Name,
+    h.HierarchyLevel2Name,
+    h.HierarchyLevel1Name
+FROM [WASTE_HEB].[config].[TuningSession] ts
+LEFT JOIN (
+    SELECT
+        i.PPGClusterID,
+        iml.HierarchyLevel4Name,
+        iml.HierarchyLevel3Name,
+        iml.HierarchyLevel2Name,
+        iml.HierarchyLevel1Name,
+        ROW_NUMBER() OVER (PARTITION BY i.PPGClusterID ORDER BY COUNT(iml.UniqueItemID) DESC) AS rn
+    FROM [WASTE_HEB].[dbo].[Item] i
+    LEFT JOIN [WASTE_HEB].[dbo].[ItemML] iml ON i.UniqueItemID = iml.UniqueItemID
+    GROUP BY i.PPGClusterID, iml.HierarchyLevel4Name, iml.HierarchyLevel3Name,
+             iml.HierarchyLevel2Name, iml.HierarchyLevel1Name
+) h ON ts.PPGClusterID = h.PPGClusterID AND h.rn = 1
+WHERE ts.VersionID = {max_version_id}
+  AND ts.Action IN ('Change', 'Reset')
+  -- Only include if the two versions' configs now match (stale session)
+  AND NOT EXISTS (
+    SELECT 1
+    FROM [WASTE_HEB].[config].[DefaultPercentage] m
+    LEFT JOIN [WASTE_HEB].[config].[DefaultPercentage] a
+        ON m.PPGClusterID = a.PPGClusterID AND a.VersionID = {active_version_id}
+    WHERE m.VersionID = {max_version_id}
+      AND m.PPGClusterID = ts.PPGClusterID
+      AND (
+            a.PPGClusterID IS NULL
+            OR m.ConfigValue         <> a.ConfigValue
+            OR m.ConfigOperationType <> a.ConfigOperationType
+          )
+  )
+  AND NOT EXISTS (
+    SELECT 1
+    FROM [WASTE_HEB].[config].[DefaultPercentage] a
+    WHERE a.VersionID = {active_version_id}
+      AND a.PPGClusterID = ts.PPGClusterID
+      AND NOT EXISTS (
+            SELECT 1 FROM [WASTE_HEB].[config].[DefaultPercentage] m
+            WHERE m.PPGClusterID = a.PPGClusterID AND m.VersionID = {max_version_id}
+          )
+  )
+ORDER BY ts.PPGClusterID;
+"""
+
+        rows_q1 = db.execute_query(q1)
+        rows_q2 = db.execute_query(q2)
+
+        # ------------------------------------------------------------------
+        # Classify Q1 rows as clean or conflict in Python
+        # ------------------------------------------------------------------
+        clean = []
+        conflicts = []
+
+        def vals_match(ts_op, ts_val, db_op, db_val):
+            op_match = (ts_op == db_op) or (ts_op is None and db_op is None)
+            if ts_val is None and db_val is None:
+                val_match = True
+            elif ts_val is not None and db_val is not None:
+                val_match = abs(float(ts_val) - float(db_val)) < 0.0001
+            else:
+                val_match = False
+            return op_match and val_match
+
+        conflict_reasons = {
+            ('Change', None):     'MAX version differs from Active but no session record exists',
+            ('Change', 'Leave'):  'MAX version was tuned but session says Leave',
+            ('Change', 'Reset'):  'MAX version has config but session says Reset',
+            ('Change', 'Change'): 'MAX version config differs from saved session values',
+            ('Reset',  None):     'Config removed from MAX version but no session record exists',
+            ('Reset',  'Change'): 'Config removed from MAX version but session says Change',
+            ('Reset',  'Leave'):  'Config removed from MAX version but session says Leave',
+        }
+
+        for r in rows_q1:
+            db_action = r['DB_DerivedAction']
+            ts_action = r.get('TS_Action')
+
+            is_clean = False
+            if db_action == 'Change' and ts_action == 'Change':
+                if vals_match(r.get('TS_OperationType'), r.get('TS_ConfigValue'),
+                              r.get('DB_OperationType'), r.get('DB_ConfigValue')):
+                    is_clean = True
+            elif db_action == 'Reset' and ts_action == 'Reset':
+                is_clean = True
+            elif db_action == 'Leave' and ts_action == 'Leave':
+                is_clean = True
+
+            if is_clean:
+                clean.append({
+                    'PPGClusterID':       r['PPGClusterID'],
+                    'Action':             db_action,
+                    'OperationType':      r.get('DB_OperationType'),
+                    'ConfigValue':        r.get('DB_ConfigValue'),
+                    'HierarchyLevel4Name': r.get('HierarchyLevel4Name'),
+                    'HierarchyLevel3Name': r.get('HierarchyLevel3Name'),
+                    'HierarchyLevel2Name': r.get('HierarchyLevel2Name'),
+                    'HierarchyLevel1Name': r.get('HierarchyLevel1Name'),
+                })
+            else:
+                reason = conflict_reasons.get(
+                    (db_action, ts_action),
+                    f'Conflict: DB={db_action}, Session={ts_action}'
+                )
+                conflicts.append({
+                    'PPGClusterID':        r['PPGClusterID'],
+                    'DB_DerivedAction':    db_action,
+                    'DB_OperationType':    r.get('DB_OperationType'),
+                    'DB_ConfigValue':      r.get('DB_ConfigValue'),
+                    'TS_Action':           ts_action,
+                    'TS_OperationType':    r.get('TS_OperationType'),
+                    'TS_ConfigValue':      r.get('TS_ConfigValue'),
+                    'TS_SavedBy':          r.get('TS_SavedBy'),
+                    'TS_SavedOnUTC':       r.get('TS_SavedOnUTC'),
+                    'ConflictReason':      reason,
+                    'HierarchyLevel4Name': r.get('HierarchyLevel4Name'),
+                    'HierarchyLevel3Name': r.get('HierarchyLevel3Name'),
+                    'HierarchyLevel2Name': r.get('HierarchyLevel2Name'),
+                    'HierarchyLevel1Name': r.get('HierarchyLevel1Name'),
+                })
+
+        # Q2 rows are always conflicts (stale session)
+        for r in rows_q2:
+            ts_action = r.get('TS_Action')
+            reason = (
+                'Configs match between versions but session says Change'
+                if ts_action == 'Change'
+                else 'Configs match between versions but session says Reset'
+            )
+            conflicts.append({
+                'PPGClusterID':        r['PPGClusterID'],
+                'DB_DerivedAction':    'Leave',
+                'DB_OperationType':    None,
+                'DB_ConfigValue':      None,
+                'TS_Action':           ts_action,
+                'TS_OperationType':    r.get('TS_OperationType'),
+                'TS_ConfigValue':      r.get('TS_ConfigValue'),
+                'TS_SavedBy':          r.get('TS_SavedBy'),
+                'TS_SavedOnUTC':       r.get('TS_SavedOnUTC'),
+                'ConflictReason':      reason,
+                'HierarchyLevel4Name': r.get('HierarchyLevel4Name'),
+                'HierarchyLevel3Name': r.get('HierarchyLevel3Name'),
+                'HierarchyLevel2Name': r.get('HierarchyLevel2Name'),
+                'HierarchyLevel1Name': r.get('HierarchyLevel1Name'),
+            })
+
+        print(f'[TUNING SESSION] Conflicts: {len(conflicts)}, Clean: {len(clean)} '
+              f'(MAX={max_version_id}, Active={active_version_id})')
+        return {'success': True, 'conflicts': conflicts, 'clean': clean}
 
     except Exception as e:
         return {'success': False, 'error': str(e)}
 
 
-@app.get("/api/tuning-session/load-proposed/{max_version_id}/{active_version_id}")
-async def load_proposed_changes(max_version_id: int, active_version_id: int):
-    """
-    Load proposed changes by comparing DefaultPercentage rows between
-    the MAX version and the Active version.
-
-    Returns:
-    - Change: exists in MAX version AND config differs from Active version
-    - Reset: exists in Active version but NOT in MAX version
-    - Ignored: exists in MAX version AND matches Active version exactly
-    - Ignored: not in either version
-    """
+@app.delete("/api/tuning-session/reset-all/{max_version_id}/{active_version_id}")
+async def reset_all_planned_changes(max_version_id: int, active_version_id: int):
+    """Reset ALL planned changes for MAX version back to match Active version."""
     try:
-        sql = f"""
--- Rule 1: Change — exists in MAX version AND config differs from Active version
-SELECT
-    m.PPGClusterID,
-    'Change' AS Action,
-    m.ConfigOperationType AS OperationType,
-    m.ConfigValue
-FROM [WASTE_HEB].[config].[DefaultPercentage] m
-LEFT JOIN [WASTE_HEB].[config].[DefaultPercentage] a
-    ON m.PPGClusterID = a.PPGClusterID
-    AND a.VersionID = {active_version_id}
-WHERE m.VersionID = {max_version_id}
-  AND (
-    a.PPGClusterID IS NULL
-    OR m.ConfigValue <> a.ConfigValue
-    OR m.ConfigOperationType <> a.ConfigOperationType
+        sql_delete_changed = f"""
+DELETE FROM [WASTE_HEB].[config].[DefaultPercentage]
+WHERE VersionID = {max_version_id}
+  AND PPGClusterID IN (
+    SELECT m.PPGClusterID
+    FROM [WASTE_HEB].[config].[DefaultPercentage] m
+    LEFT JOIN [WASTE_HEB].[config].[DefaultPercentage] a
+        ON m.PPGClusterID = a.PPGClusterID AND a.VersionID = {active_version_id}
+    WHERE m.VersionID = {max_version_id}
+      AND (a.PPGClusterID IS NULL OR m.ConfigValue <> a.ConfigValue
+           OR m.ConfigOperationType <> a.ConfigOperationType)
   )
+"""
+        db.execute_batch_query(sql_delete_changed)
 
-UNION ALL
-
--- Rule 2: Reset — exists in Active version but NOT in MAX version
+        sql_reinsert = f"""
+INSERT INTO [WASTE_HEB].[config].[DefaultPercentage]
+    (VersionID, PPGClusterID, ConfigOperationType, ConfigValue,
+     EffectiveFrom, EffectiveTo, CreatedBy, CreatedOnUTC, Comment)
 SELECT
-    a.PPGClusterID,
-    'Reset' AS Action,
-    NULL AS OperationType,
-    NULL AS ConfigValue
+    {max_version_id} AS VersionID,
+    a.PPGClusterID, a.ConfigOperationType, a.ConfigValue,
+    a.EffectiveFrom, a.EffectiveTo,
+    SYSTEM_USER AS CreatedBy, GETUTCDATE() AS CreatedOnUTC, a.Comment
 FROM [WASTE_HEB].[config].[DefaultPercentage] a
 WHERE a.VersionID = {active_version_id}
   AND NOT EXISTS (
-    SELECT 1
-    FROM [WASTE_HEB].[config].[DefaultPercentage] m
-    WHERE m.PPGClusterID = a.PPGClusterID
-    AND m.VersionID = {max_version_id}
+    SELECT 1 FROM [WASTE_HEB].[config].[DefaultPercentage] m
+    WHERE m.PPGClusterID = a.PPGClusterID AND m.VersionID = {max_version_id}
   )
-
-ORDER BY PPGClusterID
 """
-        results = db.execute_query(sql)
-        print(f'[TUNING SESSION] Loaded {len(results)} proposed changes (MAX={max_version_id}, Active={active_version_id})')
-        return {'success': True, 'rows': results}
+        db.execute_batch_query(sql_reinsert)
 
+        sql_delete_session = f"""
+DELETE FROM [WASTE_HEB].[config].[TuningSession]
+WHERE VersionID = {max_version_id}
+"""
+        db.execute_batch_query(sql_delete_session)
+
+        print(f'[TUNING SESSION] Reset all planned changes (MAX={max_version_id}, Active={active_version_id})')
+        return {
+            'success': True,
+            'message': f'All planned changes for Version {max_version_id} have been reset to match Version {active_version_id}.'
+        }
     except Exception as e:
         return {'success': False, 'error': str(e)}
 
@@ -482,16 +726,15 @@ async def mark_tuning_session_submitted(request: MarkSubmittedRequest):
     try:
         if not request.PPGClusterIDs:
             return {'success': False, 'error': 'No PPGClusterIDs provided'}
-
         ids = ', '.join(str(i) for i in request.PPGClusterIDs)
         sql = f"""
 UPDATE [WASTE_HEB].[config].[TuningSession]
 SET IsSubmitted = 1, SubmittedOnUTC = GETUTCDATE()
-WHERE VersionID = {request.VersionID}
-AND PPGClusterID IN ({ids})
+WHERE VersionID = {request.VersionID} AND PPGClusterID IN ({ids})
 """
         db.execute_batch_query(sql)
-        print(f'[TUNING SESSION] Marked {len(request.PPGClusterIDs)} rows as submitted for VersionID {request.VersionID}')
+        print(f'[TUNING SESSION] Marked {len(request.PPGClusterIDs)} rows as submitted '
+              f'for VersionID {request.VersionID}')
         return {'success': True, 'marked': len(request.PPGClusterIDs)}
     except Exception as e:
         return {'success': False, 'error': str(e)}
