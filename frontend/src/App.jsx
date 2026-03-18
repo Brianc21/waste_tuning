@@ -81,48 +81,24 @@ SELECT @NewVersionID AS NewVersionID;`
 
   return (
     <div style={{
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
+      position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
       backgroundColor: 'rgba(0, 0, 0, 0.5)',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      zIndex: 1000
+      display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000
     }}>
       <div style={{
-        background: 'white',
-        borderRadius: '8px',
-        padding: '24px',
-        width: '480px',
-        maxWidth: '90vw',
+        background: 'white', borderRadius: '8px', padding: '24px',
+        width: '480px', maxWidth: '90vw',
         boxShadow: '0 4px 20px rgba(0, 0, 0, 0.3)'
       }}>
-        <h2 style={{ marginTop: 0, marginBottom: '20px', color: '#333' }}>
-          Clone Config Version
-        </h2>
+        <h2 style={{ marginTop: 0, marginBottom: '20px', color: '#333' }}>Clone Config Version</h2>
 
         <div style={{ marginBottom: '16px' }}>
           <label style={{ display: 'block', marginBottom: '6px', fontWeight: '500', color: '#555' }}>
             Version Name <span style={{ color: '#dc3545' }}>*</span>
           </label>
-          <input
-            type="text"
-            value={versionName}
-            onChange={(e) => setVersionName(e.target.value)}
-            placeholder="e.g., 2026-03-10_ExtraDepts_1"
-            disabled={loading || success}
-            style={{
-              width: '100%',
-              padding: '10px 12px',
-              borderRadius: '4px',
-              border: '1px solid #ddd',
-              fontSize: '14px',
-              boxSizing: 'border-box',
-              backgroundColor: (loading || success) ? '#f5f5f5' : 'white'
-            }}
+          <input type="text" value={versionName} onChange={(e) => setVersionName(e.target.value)}
+            placeholder="e.g., 2026-03-10_ExtraDepts_1" disabled={loading || success}
+            style={{ width: '100%', padding: '10px 12px', borderRadius: '4px', border: '1px solid #ddd', fontSize: '14px', boxSizing: 'border-box', backgroundColor: (loading || success) ? '#f5f5f5' : 'white' }}
           />
         </div>
 
@@ -130,21 +106,9 @@ SELECT @NewVersionID AS NewVersionID;`
           <label style={{ display: 'block', marginBottom: '6px', fontWeight: '500', color: '#555' }}>
             Comment <span style={{ color: '#dc3545' }}>*</span>
           </label>
-          <input
-            type="text"
-            value={comment}
-            onChange={(e) => setComment(e.target.value)}
-            placeholder="Description of this version"
-            disabled={loading || success}
-            style={{
-              width: '100%',
-              padding: '10px 12px',
-              borderRadius: '4px',
-              border: '1px solid #ddd',
-              fontSize: '14px',
-              boxSizing: 'border-box',
-              backgroundColor: (loading || success) ? '#f5f5f5' : 'white'
-            }}
+          <input type="text" value={comment} onChange={(e) => setComment(e.target.value)}
+            placeholder="Description of this version" disabled={loading || success}
+            style={{ width: '100%', padding: '10px 12px', borderRadius: '4px', border: '1px solid #ddd', fontSize: '14px', boxSizing: 'border-box', backgroundColor: (loading || success) ? '#f5f5f5' : 'white' }}
           />
         </div>
 
@@ -152,93 +116,36 @@ SELECT @NewVersionID AS NewVersionID;`
           <label style={{ display: 'block', marginBottom: '6px', fontWeight: '500', color: '#555' }}>
             Clone From Version ID <span style={{ color: '#dc3545' }}>*</span>
           </label>
-          <input
-            type="number"
-            value={cloneFromVersionId}
-            onChange={(e) => setCloneFromVersionId(e.target.value)}
-            placeholder="Version ID to clone from"
-            disabled={loading || success}
-            style={{
-              width: '100%',
-              padding: '10px 12px',
-              borderRadius: '4px',
-              border: '1px solid #ddd',
-              fontSize: '14px',
-              boxSizing: 'border-box',
-              backgroundColor: (loading || success) ? '#f5f5f5' : 'white'
-            }}
+          <input type="number" value={cloneFromVersionId} onChange={(e) => setCloneFromVersionId(e.target.value)}
+            placeholder="Version ID to clone from" disabled={loading || success}
+            style={{ width: '100%', padding: '10px 12px', borderRadius: '4px', border: '1px solid #ddd', fontSize: '14px', boxSizing: 'border-box', backgroundColor: (loading || success) ? '#f5f5f5' : 'white' }}
           />
         </div>
 
         {error && (
-          <div style={{
-            padding: '10px 12px',
-            background: '#f8d7da',
-            color: '#721c24',
-            borderRadius: '4px',
-            marginBottom: '16px',
-            fontSize: '14px'
-          }}>
+          <div style={{ padding: '10px 12px', background: '#f8d7da', color: '#721c24', borderRadius: '4px', marginBottom: '16px', fontSize: '14px' }}>
             Error: {error}
           </div>
         )}
-
         {success && (
-          <div style={{
-            padding: '10px 12px',
-            background: '#d4edda',
-            color: '#155724',
-            borderRadius: '4px',
-            marginBottom: '16px',
-            fontSize: '14px'
-          }}>
+          <div style={{ padding: '10px 12px', background: '#d4edda', color: '#155724', borderRadius: '4px', marginBottom: '16px', fontSize: '14px' }}>
             Success: {success}
           </div>
         )}
 
         <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
-          <button
-            onClick={onClose}
-            style={{
-              padding: '10px 20px',
-              background: '#6c757d',
-              color: 'white',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: 'pointer',
-              fontSize: '14px',
-              fontWeight: '500'
-            }}
-          >
+          <button onClick={onClose} style={{ padding: '10px 20px', background: '#6c757d', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '14px', fontWeight: '500' }}>
             {success ? 'Close' : 'Cancel'}
           </button>
           {!success && (
-            <button
-              onClick={handleClone}
-              disabled={loading}
-              style={{
-                padding: '10px 20px',
-                background: loading ? '#ccc' : '#4C7EFF',
-                color: 'white',
-                border: 'none',
-                borderRadius: '4px',
-                cursor: loading ? 'not-allowed' : 'pointer',
-                fontSize: '14px',
-                fontWeight: '500'
-              }}
-            >
+            <button onClick={handleClone} disabled={loading}
+              style={{ padding: '10px 20px', background: loading ? '#ccc' : '#4C7EFF', color: 'white', border: 'none', borderRadius: '4px', cursor: loading ? 'not-allowed' : 'pointer', fontSize: '14px', fontWeight: '500' }}>
               {loading ? 'Cloning...' : 'Clone'}
             </button>
           )}
         </div>
 
-        <div style={{
-          marginTop: '20px',
-          paddingTop: '16px',
-          borderTop: '1px solid #eee',
-          fontSize: '13px',
-          color: '#666'
-        }}>
+        <div style={{ marginTop: '20px', paddingTop: '16px', borderTop: '1px solid #eee', fontSize: '13px', color: '#666' }}>
           Current Active Version is: <strong>{activeVersionId}</strong>
         </div>
       </div>
@@ -247,7 +154,7 @@ SELECT @NewVersionID AS NewVersionID;`
 }
 
 // Modal component for Tune Default Percentages
-function TuneDefaultPercentagesModal({ isOpen, onClose, changeDecisions, maxVersion, activeVersion, onSuccess, onWriteQuery }) {
+function TuneDefaultPercentagesModal({ isOpen, onClose, changeDecisions, maxVersion, activeVersion, onSuccess, onWriteQuery, onMarkSubmitted }) {
   const getDefaultComment = () => {
     const now = new Date()
     const year = now.getFullYear()
@@ -298,13 +205,12 @@ function TuneDefaultPercentagesModal({ isOpen, onClose, changeDecisions, maxVers
     setTuningConfigs(prev => prev.map(config => ({ ...config, [field]: value })))
   }
 
-const handleTune = async () => {
+  const handleTune = async () => {
     if (!versionId.trim()) {
       setError('Version ID is required')
       return
     }
 
-    // Separate Change and Reset rows
     const changeRows = tuningConfigs.filter(c => c.decision === 'Change')
     const resetRows = tuningConfigs.filter(c => c.decision === 'Reset')
 
@@ -313,7 +219,6 @@ const handleTune = async () => {
       return
     }
 
-    // Validate Change rows have configValue
     for (const config of changeRows) {
       if (!config.configValue || config.configValue === '') {
         setError(`Config value is required for PPG ${config.PPGClusterID}`)
@@ -322,8 +227,6 @@ const handleTune = async () => {
     }
 
     const parsedVersionId = parseInt(versionId, 10)
-
-    // Check if tuning active version - require confirmation
     const activeVersionId = activeVersion?.[0]?.VersionID
     if (activeVersionId && parsedVersionId === activeVersionId) {
       const confirmed = window.confirm(
@@ -331,16 +234,13 @@ const handleTune = async () => {
         `Tuning should typically be done on a cloned version, not the active one.\n\n` +
         `Are you sure you want to proceed with modifying the active version?`
       )
-      if (!confirmed) {
-        return
-      }
+      if (!confirmed) return
     }
 
     let queries = []
 
-    // Build Change query if there are Change rows
     if (changeRows.length > 0) {
-      const valuesRows = changeRows.map(config => 
+      const valuesRows = changeRows.map(config =>
         `    ('${config.PPGClusterID}','${config.operationType}','${config.configValue}','${config.comment.replace(/'/g, "''")}')`
       ).join(',\n')
 
@@ -360,7 +260,6 @@ EXEC config.csp_BulkConfigUpsertDefaultPercentage
     , @EffectiveTo = @EffectiveTo;`)
     }
 
-    // Build Reset (DELETE) query if there are Reset rows
     if (resetRows.length > 0) {
       const ppgIds = resetRows.map(c => c.PPGClusterID).join(', ')
       queries.push(`DELETE FROM [WASTE_HEB].[config].[DefaultPercentage] 
@@ -370,14 +269,12 @@ AND PPGClusterID IN (${ppgIds})`)
 
     const combinedSql = queries.join('\n\n')
 
-    // TEST MODE: Write to query box instead of executing
     if (onWriteQuery) {
       onWriteQuery(combinedSql)
       onClose()
       return
     }
 
-    // Production mode - execute the query
     setLoading(true)
     setError(null)
     setSuccess(null)
@@ -393,6 +290,13 @@ AND PPGClusterID IN (${ppgIds})`)
         if (changeRows.length > 0) messages.push(`tuned ${changeRows.length} PPG Cluster(s)`)
         if (resetRows.length > 0) messages.push(`reset ${resetRows.length} PPG Cluster(s)`)
         setSuccess(`Successfully ${messages.join(' and ')} in Version ${versionId}!`)
+
+        // Mark submitted rows in TuningSession
+        const submittedIds = [...changeRows, ...resetRows].map(c => c.PPGClusterID)
+        if (onMarkSubmitted) {
+          onMarkSubmitted(parsedVersionId, submittedIds)
+        }
+
         if (onSuccess) onSuccess()
       } else {
         setError(response.data.error || 'Failed to execute tuning query')
@@ -408,185 +312,63 @@ AND PPGClusterID IN (${ppgIds})`)
 
   if (!changeDecisions || changeDecisions.length === 0) {
     return (
-      <div style={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        backgroundColor: 'rgba(0, 0, 0, 0.5)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        zIndex: 1000
-      }}>
-        <div style={{
-          background: 'white',
-          borderRadius: '8px',
-          padding: '24px',
-          width: '500px',
-          maxWidth: '90vw',
-          boxShadow: '0 4px 20px rgba(0, 0, 0, 0.3)'
-        }}>
-          <h2 style={{ marginTop: 0, marginBottom: '20px', color: '#333' }}>
-            Tune Default Percentages
-          </h2>
-          <div style={{
-            padding: '20px',
-            background: '#fff3cd',
-            color: '#856404',
-            borderRadius: '4px',
-            marginBottom: '20px'
-          }}>
+      <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
+        <div style={{ background: 'white', borderRadius: '8px', padding: '24px', width: '500px', maxWidth: '90vw', boxShadow: '0 4px 20px rgba(0,0,0,0.3)' }}>
+          <h2 style={{ marginTop: 0, marginBottom: '20px', color: '#333' }}>Tune Default Percentages</h2>
+          <div style={{ padding: '20px', background: '#fff3cd', color: '#856404', borderRadius: '4px', marginBottom: '20px' }}>
             Warning: No PPG Clusters are marked as "Change" in the Current Default Markdowns table.
             <br /><br />
             Please mark rows as "Change" before using this tuning action.
           </div>
           <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-            <button
-              onClick={onClose}
-              style={{
-                padding: '10px 20px',
-                background: '#6c757d',
-                color: 'white',
-                border: 'none',
-                borderRadius: '4px',
-                cursor: 'pointer',
-                fontSize: '14px',
-                fontWeight: '500'
-              }}
-            >
-              Close
-            </button>
+            <button onClick={onClose} style={{ padding: '10px 20px', background: '#6c757d', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '14px', fontWeight: '500' }}>Close</button>
           </div>
         </div>
       </div>
     )
   }
 
-  const inputStyle = {
-    padding: '6px 8px',
-    borderRadius: '4px',
-    border: '1px solid #ddd',
-    fontSize: '13px',
-    boxSizing: 'border-box'
-  }
-
+  const inputStyle = { padding: '6px 8px', borderRadius: '4px', border: '1px solid #ddd', fontSize: '13px', boxSizing: 'border-box' }
   const maxVersionId = maxVersion?.[0]?.VersionID || 'Unknown'
   const isLocked = loading || success
 
   return (
-    <div style={{
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      backgroundColor: 'rgba(0, 0, 0, 0.5)',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      zIndex: 1000
-    }}>
-      <div style={{
-        background: 'white',
-        borderRadius: '8px',
-        padding: '24px',
-        width: '1200px',
-        maxWidth: '95vw',
-        maxHeight: '90vh',
-        overflow: 'hidden',
-        display: 'flex',
-        flexDirection: 'column',
-        boxShadow: '0 4px 20px rgba(0, 0, 0, 0.3)'
-      }}>
-        <h2 style={{ marginTop: 0, marginBottom: '16px', color: '#333' }}>
-          Tune Default Percentages
-        </h2>
+    <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
+      <div style={{ background: 'white', borderRadius: '8px', padding: '24px', width: '1200px', maxWidth: '95vw', maxHeight: '90vh', overflow: 'hidden', display: 'flex', flexDirection: 'column', boxShadow: '0 4px 20px rgba(0,0,0,0.3)' }}>
+        <h2 style={{ marginTop: 0, marginBottom: '16px', color: '#333' }}>Tune Default Percentages</h2>
 
         <p style={{ color: '#666', marginBottom: '16px', fontSize: '14px' }}>
           Configure tuning parameters below.
-          <span style={{ marginLeft: '16px', color: '#555' }}>
-            MAX Version ID: <strong>{maxVersionId}</strong>
-          </span>
+          <span style={{ marginLeft: '16px', color: '#555' }}>MAX Version ID: <strong>{maxVersionId}</strong></span>
         </p>
 
         <div style={{ marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <label style={{ fontWeight: '500', color: '#555', minWidth: '80px' }}>
-            Version ID:
-          </label>
-          <input
-            type="number"
-            value={versionId}
-            onChange={(e) => setVersionId(e.target.value)}
-            disabled={isLocked}
-            style={{ ...inputStyle, width: '100px', backgroundColor: isLocked ? '#f5f5f5' : 'white' }}
-          />
+          <label style={{ fontWeight: '500', color: '#555', minWidth: '80px' }}>Version ID:</label>
+          <input type="number" value={versionId} onChange={(e) => setVersionId(e.target.value)} disabled={isLocked}
+            style={{ ...inputStyle, width: '100px', backgroundColor: isLocked ? '#f5f5f5' : 'white' }} />
         </div>
 
-        <div style={{ 
-          marginBottom: '16px', 
-          padding: '12px', 
-          background: '#f8f9fa', 
-          borderRadius: '6px',
-          display: 'flex',
-          gap: '16px',
-          alignItems: 'center',
-          flexWrap: 'wrap',
-          opacity: isLocked ? 0.6 : 1
-        }}>
+        <div style={{ marginBottom: '16px', padding: '12px', background: '#f8f9fa', borderRadius: '6px', display: 'flex', gap: '16px', alignItems: 'center', flexWrap: 'wrap', opacity: isLocked ? 0.6 : 1 }}>
           <span style={{ fontWeight: '500', color: '#555' }}>Apply to all:</span>
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
             <label style={{ fontSize: '13px' }}>Operation:</label>
-            <select 
-              onChange={(e) => applyToAll('operationType', e.target.value)}
-              disabled={isLocked}
-              style={{ ...inputStyle, width: '100px' }}
-            >
+            <select onChange={(e) => applyToAll('operationType', e.target.value)} disabled={isLocked} style={{ ...inputStyle, width: '100px' }}>
               <option value="">Select...</option>
-              {OPERATION_TYPES.map(op => (
-                <option key={op.code} value={op.code}>{op.label}</option>
-              ))}
+              {OPERATION_TYPES.map(op => <option key={op.code} value={op.code}>{op.label}</option>)}
             </select>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
             <label style={{ fontSize: '13px' }}>Value:</label>
-            <input
-              type="number"
-              step="0.01"
-              placeholder="0.00"
-              onChange={(e) => applyToAll('configValue', e.target.value)}
-              disabled={isLocked}
-              style={{ ...inputStyle, width: '80px' }}
-            />
+            <input type="number" step="0.01" placeholder="0.00" onChange={(e) => applyToAll('configValue', e.target.value)} disabled={isLocked} style={{ ...inputStyle, width: '80px' }} />
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
             <label style={{ fontSize: '13px' }}>Comment:</label>
-            <input
-              type="text"
-              placeholder={getDefaultComment()}
-              onChange={(e) => applyToAll('comment', e.target.value)}
-              disabled={isLocked}
-              maxLength={214}
-              size={40}
-              style={{ ...inputStyle, width: '300px' }}
-            />
+            <input type="text" placeholder={getDefaultComment()} onChange={(e) => applyToAll('comment', e.target.value)} disabled={isLocked} maxLength={214} size={40} style={{ ...inputStyle, width: '300px' }} />
           </div>
         </div>
 
-        <div style={{ 
-          flex: 1, 
-          overflow: 'auto', 
-          border: '1px solid #ddd', 
-          borderRadius: '4px',
-          marginBottom: '16px',
-          opacity: isLocked ? 0.6 : 1
-        }}>
-          <table style={{ 
-            width: '100%', 
-            borderCollapse: 'collapse',
-            fontSize: '13px'
-          }}>
+        <div style={{ flex: 1, overflow: 'auto', border: '1px solid #ddd', borderRadius: '4px', marginBottom: '16px', opacity: isLocked ? 0.6 : 1 }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
             <thead style={{ position: 'sticky', top: 0, background: '#4C7EFF', color: 'white' }}>
               <tr>
                 <th style={{ padding: '10px', textAlign: 'left', fontWeight: '600', width: '90px' }}>PPG ID</th>
@@ -602,51 +384,21 @@ AND PPGClusterID IN (${ppgIds})`)
             <tbody>
               {tuningConfigs.filter(c => c.decision === "Change").map((config, index) => (
                 <tr key={config.PPGClusterID} style={{ background: index % 2 === 0 ? '#fff' : '#f8f9fa' }}>
-                  <td style={{ padding: '8px 10px', fontWeight: '500' }}>
-                    {config.PPGClusterID}
-                  </td>
-                  <td style={{ padding: '8px 10px', color: '#666', fontSize: '12px' }}>
-                    {config.HierarchyLevel4Name}
-                  </td>
-                  <td style={{ padding: '8px 10px', color: '#666', fontSize: '12px' }}>
-                    {config.HierarchyLevel3Name}
-                  </td>
-                  <td style={{ padding: '8px 10px', color: '#666', fontSize: '12px' }}>
-                    {config.HierarchyLevel2Name}
-                  </td>
-                  <td style={{ padding: '8px 10px', color: '#666', fontSize: '12px' }}>
-                    {config.HierarchyLevel1Name}
-                  </td>
+                  <td style={{ padding: '8px 10px', fontWeight: '500' }}>{config.PPGClusterID}</td>
+                  <td style={{ padding: '8px 10px', color: '#666', fontSize: '12px' }}>{config.HierarchyLevel4Name}</td>
+                  <td style={{ padding: '8px 10px', color: '#666', fontSize: '12px' }}>{config.HierarchyLevel3Name}</td>
+                  <td style={{ padding: '8px 10px', color: '#666', fontSize: '12px' }}>{config.HierarchyLevel2Name}</td>
+                  <td style={{ padding: '8px 10px', color: '#666', fontSize: '12px' }}>{config.HierarchyLevel1Name}</td>
                   <td style={{ padding: '8px 10px', textAlign: 'center' }}>
-                    <select
-                      value={config.operationType}
-                      onChange={(e) => updateConfig(index, 'operationType', e.target.value)}
-                      disabled={isLocked}
-                      style={{ ...inputStyle, width: '100%' }}
-                    >
-                      {OPERATION_TYPES.map(op => (
-                        <option key={op.code} value={op.code}>{op.label}</option>
-                      ))}
+                    <select value={config.operationType} onChange={(e) => updateConfig(index, 'operationType', e.target.value)} disabled={isLocked} style={{ ...inputStyle, width: '100%' }}>
+                      {OPERATION_TYPES.map(op => <option key={op.code} value={op.code}>{op.label}</option>)}
                     </select>
                   </td>
                   <td style={{ padding: '8px 10px', textAlign: 'center' }}>
-                    <input
-                      type="number"
-                      step="0.01"
-                      value={config.configValue}
-                      onChange={(e) => updateConfig(index, 'configValue', e.target.value)}
-                      disabled={isLocked}
-                      style={{ ...inputStyle, width: '100%', textAlign: 'center' }}
-                    />
+                    <input type="number" step="0.01" value={config.configValue} onChange={(e) => updateConfig(index, 'configValue', e.target.value)} disabled={isLocked} style={{ ...inputStyle, width: '100%', textAlign: 'center' }} />
                   </td>
                   <td style={{ padding: '8px 10px' }}>
-                    <input
-                      type="text"
-                      value={config.comment}
-                      onChange={(e) => updateConfig(index, 'comment', e.target.value)}
-                      disabled={isLocked}
-                      style={{ ...inputStyle, width: '100%' }}
-                    />
+                    <input type="text" value={config.comment} onChange={(e) => updateConfig(index, 'comment', e.target.value)} disabled={isLocked} style={{ ...inputStyle, width: '100%' }} />
                   </td>
                 </tr>
               ))}
@@ -654,7 +406,6 @@ AND PPGClusterID IN (${ppgIds})`)
           </table>
         </div>
 
-        {/* Reset Rows Table */}
         {tuningConfigs.filter(c => c.decision === 'Reset').length > 0 && (
           <div style={{ marginBottom: '16px' }}>
             <h4 style={{ margin: '0 0 8px 0', color: '#721c24', fontSize: '14px' }}>
@@ -663,18 +414,8 @@ AND PPGClusterID IN (${ppgIds})`)
             <p style={{ margin: '0 0 8px 0', color: '#666', fontSize: '12px' }}>
               These will be deleted from the DefaultPercentage table for the selected Version.
             </p>
-            <div style={{ 
-              border: '1px solid #f5c6cb', 
-              borderRadius: '4px',
-              background: '#fff',
-              maxHeight: '150px',
-              overflow: 'auto'
-            }}>
-              <table style={{ 
-                width: '100%', 
-                borderCollapse: 'collapse',
-                fontSize: '12px'
-              }}>
+            <div style={{ border: '1px solid #f5c6cb', borderRadius: '4px', background: '#fff', maxHeight: '150px', overflow: 'auto' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
                 <thead style={{ position: 'sticky', top: 0, background: '#f8d7da', color: '#721c24' }}>
                   <tr>
                     <th style={{ padding: '8px', textAlign: 'left', fontWeight: '600', width: '90px' }}>PPG ID</th>
@@ -700,64 +441,24 @@ AND PPGClusterID IN (${ppgIds})`)
           </div>
         )}
 
-
         {error && (
-          <div style={{
-            padding: '10px 12px',
-            background: '#f8d7da',
-            color: '#721c24',
-            borderRadius: '4px',
-            marginBottom: '16px',
-            fontSize: '14px'
-          }}>
+          <div style={{ padding: '10px 12px', background: '#f8d7da', color: '#721c24', borderRadius: '4px', marginBottom: '16px', fontSize: '14px' }}>
             Error: {error}
           </div>
         )}
-
         {success && (
-          <div style={{
-            padding: '10px 12px',
-            background: '#d4edda',
-            color: '#155724',
-            borderRadius: '4px',
-            marginBottom: '16px',
-            fontSize: '14px'
-          }}>
+          <div style={{ padding: '10px 12px', background: '#d4edda', color: '#155724', borderRadius: '4px', marginBottom: '16px', fontSize: '14px' }}>
             Success: {success}
           </div>
         )}
 
         <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
-          <button
-            onClick={onClose}
-            style={{
-              padding: '10px 20px',
-              background: '#6c757d',
-              color: 'white',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: 'pointer',
-              fontSize: '14px',
-              fontWeight: '500'
-            }}
-          >
+          <button onClick={onClose} style={{ padding: '10px 20px', background: '#6c757d', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '14px', fontWeight: '500' }}>
             {success ? 'Close' : 'Cancel'}
           </button>
           {!success && (
-            <button
-              onClick={handleTune}
-              disabled={loading}
-              style={{
-                padding: '10px 20px',
-                background: loading ? '#ccc' : '#4C7EFF',
-                color: 'white',
-                border: 'none',
-                borderRadius: '4px',
-                cursor: loading ? 'not-allowed' : 'pointer',
-                fontSize: '14px',
-                fontWeight: '500'
-              }}
-            >
+            <button onClick={handleTune} disabled={loading}
+              style={{ padding: '10px 20px', background: loading ? '#ccc' : '#4C7EFF', color: 'white', border: 'none', borderRadius: '4px', cursor: loading ? 'not-allowed' : 'pointer', fontSize: '14px', fontWeight: '500' }}>
               {loading ? 'Tuning...' : 'Tune'}
             </button>
           )}
@@ -766,8 +467,6 @@ AND PPGClusterID IN (${ppgIds})`)
     </div>
   )
 }
-
-
 
 // Modal component for Activate Config Version
 function ActivateConfigModal({ isOpen, onClose, maxVersion, onSuccess }) {
@@ -780,13 +479,11 @@ function ActivateConfigModal({ isOpen, onClose, maxVersion, onSuccess }) {
 
   useEffect(() => {
     if (isOpen) {
-      // Set default version to max version
       if (maxVersion && maxVersion.length > 0) {
         setVersionId(String(maxVersion[0].VersionID))
       }
       setError(null)
       setSuccess(null)
-      // Load all versions
       loadVersions()
     }
   }, [isOpen, maxVersion])
@@ -795,24 +492,10 @@ function ActivateConfigModal({ isOpen, onClose, maxVersion, onSuccess }) {
     setLoadingVersions(true)
     try {
       const response = await axios.post(`${API_BASE_URL}/api/query`, {
-        query: `
-          SELECT 
-            [VersionID],
-            [VersionName],
-            [Comment],
-            [CreatedBy],
-            [CreatedOnUTC],
-            [IsActive],
-            [IsLocked],
-            [IsProtected]
-          FROM [WASTE_HEB].[config].[ConfigVersions]
-          ORDER BY [VersionID] DESC
-        `,
+        query: `SELECT [VersionID],[VersionName],[Comment],[CreatedBy],[CreatedOnUTC],[IsActive],[IsLocked],[IsProtected] FROM [WASTE_HEB].[config].[ConfigVersions] ORDER BY [VersionID] DESC`,
         params: []
       })
-      if (response.data.success) {
-        setVersions(response.data.data || [])
-      }
+      if (response.data.success) setVersions(response.data.data || [])
     } catch (err) {
       console.error('Failed to load versions:', err)
     } finally {
@@ -821,42 +504,26 @@ function ActivateConfigModal({ isOpen, onClose, maxVersion, onSuccess }) {
   }
 
   const handleActivate = async () => {
-    if (!versionId.trim()) {
-      setError('Version ID is required')
-      return
-    }
-
+    if (!versionId.trim()) { setError('Version ID is required'); return }
     const parsedVersionId = parseInt(versionId, 10)
-    if (isNaN(parsedVersionId)) {
-      setError('Version ID must be a number')
-      return
-    }
+    if (isNaN(parsedVersionId)) { setError('Version ID must be a number'); return }
 
     const sql = `EXEC config.csp_ConfigVersionActivate 
     @VersionID = ${parsedVersionId}
     , @Activate = 1
     , @CreatedBy = NULL`
 
-    // Require user confirmation before activating
     const confirmed = window.confirm(
-      `Are you sure you want to activate Config Version ${parsedVersionId}?\n\n` +
-      `This will make Version ${parsedVersionId} the active configuration.`
+      `Are you sure you want to activate Config Version ${parsedVersionId}?\n\nThis will make Version ${parsedVersionId} the active configuration.`
     )
-    if (!confirmed) {
-      return
-    }
-
+    if (!confirmed) return
 
     setLoading(true)
     setError(null)
     setSuccess(null)
 
     try {
-      const response = await axios.post(`${API_BASE_URL}/api/query/batch`, {
-        query: sql,
-        params: null
-      })
-
+      const response = await axios.post(`${API_BASE_URL}/api/query/batch`, { query: sql, params: null })
       if (response.data.success) {
         setSuccess(`Successfully activated config version ${parsedVersionId}!`)
         if (onSuccess) onSuccess()
@@ -873,82 +540,22 @@ function ActivateConfigModal({ isOpen, onClose, maxVersion, onSuccess }) {
   if (!isOpen) return null
 
   return (
-    <div style={{
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      backgroundColor: 'rgba(0, 0, 0, 0.5)',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      zIndex: 1000
-    }}>
-      <div style={{
-        background: 'white',
-        borderRadius: '8px',
-        padding: '24px',
-        width: '700px',
-        maxWidth: '90vw',
-        maxHeight: '80vh',
-        overflow: 'auto',
-        boxShadow: '0 4px 20px rgba(0,0,0,0.3)'
-      }}>
-        <h2 style={{ marginTop: 0, marginBottom: '16px', color: '#333' }}>
-          Activate Config Version
-        </h2>
+    <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
+      <div style={{ background: 'white', borderRadius: '8px', padding: '24px', width: '700px', maxWidth: '90vw', maxHeight: '80vh', overflow: 'auto', boxShadow: '0 4px 20px rgba(0,0,0,0.3)' }}>
+        <h2 style={{ marginTop: 0, marginBottom: '16px', color: '#333' }}>Activate Config Version</h2>
 
-        {error && (
-          <div style={{
-            background: '#f8d7da',
-            border: '1px solid #f5c6cb',
-            borderRadius: '4px',
-            padding: '12px',
-            marginBottom: '16px',
-            color: '#721c24'
-          }}>
-            {error}
-          </div>
-        )}
-
-        {success && (
-          <div style={{
-            background: '#d4edda',
-            border: '1px solid #c3e6cb',
-            borderRadius: '4px',
-            padding: '12px',
-            marginBottom: '16px',
-            color: '#155724'
-          }}>
-            {success}
-          </div>
-        )}
+        {error && <div style={{ background: '#f8d7da', border: '1px solid #f5c6cb', borderRadius: '4px', padding: '12px', marginBottom: '16px', color: '#721c24' }}>{error}</div>}
+        {success && <div style={{ background: '#d4edda', border: '1px solid #c3e6cb', borderRadius: '4px', padding: '12px', marginBottom: '16px', color: '#155724' }}>{success}</div>}
 
         <div style={{ marginBottom: '16px' }}>
-          <label style={{ display: 'block', marginBottom: '6px', fontWeight: '500', color: '#333' }}>
-            Version ID to Activate:
-          </label>
-          <input
-            type="number"
-            value={versionId}
-            onChange={(e) => setVersionId(e.target.value)}
-            style={{
-              width: '150px',
-              padding: '10px 12px',
-              border: '1px solid #ddd',
-              borderRadius: '4px',
-              fontSize: '16px'
-            }}
-            placeholder="Enter Version ID"
-          />
+          <label style={{ display: 'block', marginBottom: '6px', fontWeight: '500', color: '#333' }}>Version ID to Activate:</label>
+          <input type="number" value={versionId} onChange={(e) => setVersionId(e.target.value)}
+            style={{ width: '150px', padding: '10px 12px', border: '1px solid #ddd', borderRadius: '4px', fontSize: '16px' }}
+            placeholder="Enter Version ID" />
         </div>
 
-        {/* Available Versions Table */}
         <div style={{ marginBottom: '16px' }}>
-          <h3 style={{ marginBottom: '8px', color: '#333', fontSize: '14px' }}>
-            Available Versions:
-          </h3>
+          <h3 style={{ marginBottom: '8px', color: '#333', fontSize: '14px' }}>Available Versions:</h3>
           {loadingVersions ? (
             <div style={{ color: '#666', fontStyle: 'italic' }}>Loading versions...</div>
           ) : (
@@ -966,30 +573,15 @@ function ActivateConfigModal({ isOpen, onClose, maxVersion, onSuccess }) {
                 </thead>
                 <tbody>
                   {versions.map((v, idx) => (
-                    <tr 
-                      key={v.VersionID} 
-                      style={{ 
-                        background: v.VersionID === parseInt(versionId, 10) ? '#e3f2fd' : (idx % 2 === 0 ? '#fff' : '#f8f9fa'),
-                        cursor: 'pointer'
-                      }}
-                      onClick={() => setVersionId(String(v.VersionID))}
-                    >
-                      <td style={{ padding: '8px', borderBottom: '1px solid #dee2e6', fontWeight: v.IsActive ? 'bold' : 'normal', textAlign: 'center' }}>
-                        {v.VersionID}
-                      </td>
+                    <tr key={v.VersionID}
+                      style={{ background: v.VersionID === parseInt(versionId, 10) ? '#e3f2fd' : (idx % 2 === 0 ? '#fff' : '#f8f9fa'), cursor: 'pointer' }}
+                      onClick={() => setVersionId(String(v.VersionID))}>
+                      <td style={{ padding: '8px', borderBottom: '1px solid #dee2e6', fontWeight: v.IsActive ? 'bold' : 'normal', textAlign: 'center' }}>{v.VersionID}</td>
                       <td style={{ padding: '8px', borderBottom: '1px solid #dee2e6', textAlign: 'center' }}>{v.VersionName}</td>
-                      <td style={{ padding: '8px', borderBottom: '1px solid #dee2e6', maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', textAlign: 'center' }}>
-                        {v.Comment}
-                      </td>
-                      <td style={{ padding: '8px', borderBottom: '1px solid #dee2e6', textAlign: 'center' }}>
-                        {v.IsActive ? '✓' : ''}
-                      </td>
-                      <td style={{ padding: '8px', borderBottom: '1px solid #dee2e6', textAlign: 'center' }}>
-                        {v.IsLocked ? '🔒' : ''}
-                      </td>
-                      <td style={{ padding: '8px', borderBottom: '1px solid #dee2e6', fontSize: '11px', textAlign: 'center' }}>
-                        {v.CreatedOnUTC ? new Date(v.CreatedOnUTC).toLocaleDateString() : ''}
-                      </td>
+                      <td style={{ padding: '8px', borderBottom: '1px solid #dee2e6', maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', textAlign: 'center' }}>{v.Comment}</td>
+                      <td style={{ padding: '8px', borderBottom: '1px solid #dee2e6', textAlign: 'center' }}>{v.IsActive ? '✓' : ''}</td>
+                      <td style={{ padding: '8px', borderBottom: '1px solid #dee2e6', textAlign: 'center' }}>{v.IsLocked ? '🔒' : ''}</td>
+                      <td style={{ padding: '8px', borderBottom: '1px solid #dee2e6', fontSize: '11px', textAlign: 'center' }}>{v.CreatedOnUTC ? new Date(v.CreatedOnUTC).toLocaleDateString() : ''}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -999,35 +591,10 @@ function ActivateConfigModal({ isOpen, onClose, maxVersion, onSuccess }) {
         </div>
 
         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '20px' }}>
-          <button
-            onClick={onClose}
-            style={{
-              padding: '10px 20px',
-              border: '1px solid #ddd',
-              borderRadius: '4px',
-              background: '#6c757d',
-              color: 'white',
-              cursor: 'pointer',
-              fontSize: '14px'
-            }}
-          >
-            Cancel
-          </button>
+          <button onClick={onClose} style={{ padding: '10px 20px', border: '1px solid #ddd', borderRadius: '4px', background: '#6c757d', color: 'white', cursor: 'pointer', fontSize: '14px' }}>Cancel</button>
           {!success && (
-            <button
-              onClick={handleActivate}
-              disabled={loading || !versionId.trim()}
-              style={{
-                padding: '10px 20px',
-                border: 'none',
-                borderRadius: '4px',
-                background: loading || !versionId.trim() ? '#ccc' : '#28a745',
-                color: 'white',
-                cursor: loading || !versionId.trim() ? 'not-allowed' : 'pointer',
-                fontSize: '14px',
-                fontWeight: '500'
-              }}
-            >
+            <button onClick={handleActivate} disabled={loading || !versionId.trim()}
+              style={{ padding: '10px 20px', border: 'none', borderRadius: '4px', background: loading || !versionId.trim() ? '#ccc' : '#28a745', color: 'white', cursor: loading || !versionId.trim() ? 'not-allowed' : 'pointer', fontSize: '14px', fontWeight: '500' }}>
               {loading ? 'Activating...' : 'Activate'}
             </button>
           )}
@@ -1042,58 +609,36 @@ function App() {
   const [queryResults, setQueryResults] = useState(null)
   const [queryError, setQueryError] = useState(null)
   const [queryLoading, setQueryLoading] = useState(false)
-
   const [healthStatus, setHealthStatus] = useState(null)
-
-  // Active Config Version state
   const [activeConfigVersion, setActiveConfigVersion] = useState(null)
   const [activeConfigLoading, setActiveConfigLoading] = useState(false)
   const [activeConfigError, setActiveConfigError] = useState(null)
-
-  // MAX Config Version state
   const [maxConfigVersion, setMaxConfigVersion] = useState(null)
   const [maxConfigLoading, setMaxConfigLoading] = useState(false)
   const [maxConfigError, setMaxConfigError] = useState(null)
-
-  // Current Default Markdowns state
   const [markdownData, setMarkdownData] = useState(null)
   const [markdownLoading, setMarkdownLoading] = useState(false)
   const [markdownError, setMarkdownError] = useState(null)
-
-  // Clone Config Modal state
   const [showCloneModal, setShowCloneModal] = useState(false)
-
-  // Tune Default Percentages Modal state
   const [showTuneModal, setShowTuneModal] = useState(false)
   const [tuneChangeDecisions, setTuneChangeDecisions] = useState([])
-
-  // Activate Config Modal state
   const [showActivateModal, setShowActivateModal] = useState(false)
-
-  // Settings Modal state
   const [showSettingsModal, setShowSettingsModal] = useState(false)
   const [dbConfig, setDbConfig] = useState({ server: '', database: '', port: '1433' })
-
-  // Ref for MarkdownTable to access reset function
   const markdownTableRef = useRef(null)
 
-  // Load initial data on mount
   useEffect(() => {
     checkHealth()
     loadConfig()
     loadConfigVersions()
     loadMarkdownData()
   }, [])
-  
+
   const loadConfig = async () => {
     try {
       const response = await axios.get(`${API_BASE_URL}/api/config`)
       if (response.data.success) {
-        setDbConfig({
-          server: response.data.server || '',
-          database: response.data.database || '',
-          port: response.data.port || '1433'
-        })
+        setDbConfig({ server: response.data.server || '', database: response.data.database || '', port: response.data.port || '1433' })
       }
     } catch (error) {
       console.error('Failed to load config:', error)
@@ -1112,35 +657,19 @@ function App() {
   const loadConfigVersions = async () => {
     const activeQuery = onLoadQueries.find(q => q.id === 'active-config-version')
     const maxQuery = onLoadQueries.find(q => q.id === 'max-config-version')
-
     setActiveConfigLoading(true)
     setMaxConfigLoading(true)
     setActiveConfigError(null)
     setMaxConfigError(null)
-
     try {
       const [activeResponse, maxResponse] = await Promise.all([
-        axios.post(`${API_BASE_URL}/api/query`, {
-          query: activeQuery.sql,
-          params: activeQuery.params.length > 0 ? activeQuery.params : null
-        }),
-        axios.post(`${API_BASE_URL}/api/query`, {
-          query: maxQuery.sql,
-          params: maxQuery.params.length > 0 ? maxQuery.params : null
-        })
+        axios.post(`${API_BASE_URL}/api/query`, { query: activeQuery.sql, params: activeQuery.params.length > 0 ? activeQuery.params : null }),
+        axios.post(`${API_BASE_URL}/api/query`, { query: maxQuery.sql, params: maxQuery.params.length > 0 ? maxQuery.params : null })
       ])
-
-      if (activeResponse.data.success) {
-        setActiveConfigVersion(activeResponse.data.data)
-      } else {
-        setActiveConfigError(activeResponse.data.error)
-      }
-
-      if (maxResponse.data.success) {
-        setMaxConfigVersion(maxResponse.data.data)
-      } else {
-        setMaxConfigError(maxResponse.data.error)
-      }
+      if (activeResponse.data.success) setActiveConfigVersion(activeResponse.data.data)
+      else setActiveConfigError(activeResponse.data.error)
+      if (maxResponse.data.success) setMaxConfigVersion(maxResponse.data.data)
+      else setMaxConfigError(maxResponse.data.error)
     } catch (error) {
       const errorMsg = error.response?.data?.detail || error.message
       setActiveConfigError(errorMsg)
@@ -1154,27 +683,15 @@ function App() {
   const loadMarkdownData = async () => {
     const query = dashboardQueries['current-default-markdowns']
     if (!query) return
-
     setMarkdownLoading(true)
     setMarkdownError(null)
-
     try {
-      const response = await axios.post(`${API_BASE_URL}/api/query/batch`, {
-        query: query.sql,
-        params: null
-      })
-
-      if (response.data.success) {
-        setMarkdownData(response.data.data)
-      } else {
-        setMarkdownError(response.data.error)
-      }
+      const response = await axios.post(`${API_BASE_URL}/api/query/batch`, { query: query.sql, params: null })
+      if (response.data.success) setMarkdownData(response.data.data)
+      else setMarkdownError(response.data.error)
     } catch (error) {
-      if (error.response?.status === 404) {
-        setMarkdownError('Batch query endpoint not available.')
-      } else {
-        setMarkdownError(error.response?.data?.detail || error.message)
-      }
+      if (error.response?.status === 404) setMarkdownError('Batch query endpoint not available.')
+      else setMarkdownError(error.response?.data?.detail || error.message)
     } finally {
       setMarkdownLoading(false)
     }
@@ -1194,41 +711,27 @@ function App() {
     return activeConfigVersion[0]?.VersionID === maxConfigVersion[0]?.VersionID
   }
 
-const executeQuery = async () => {
-    // Validate query is SELECT only - block dangerous operations
+  const executeQuery = async () => {
     const dangerousKeywords = ['INSERT', 'UPDATE', 'DELETE', 'DROP', 'TRUNCATE', 'ALTER', 'CREATE', 'EXEC', 'EXECUTE', 'MERGE', 'GRANT', 'REVOKE']
-    const queryUpper = queryText.toUpperCase().replace(/--.*$/gm, '').replace(/\/\*[\s\S]*?\*\//g, '') // Remove comments
-    
+    const queryUpper = queryText.toUpperCase().replace(/--.*$/gm, '').replace(/\/\*[\s\S]*?\*\//g, '')
     for (const keyword of dangerousKeywords) {
-      // Check for keyword at start of statement or after semicolon
       const regex = new RegExp('(^|;|\\s)' + keyword + '\\s', 'i')
       if (regex.test(queryUpper)) {
         setQueryError(`Query blocked: "${keyword}" statements are not allowed. This textbox only permits SELECT queries.`)
         return
       }
     }
-    
     if (!queryUpper.trim().startsWith('SELECT') && !queryUpper.trim().startsWith('WITH')) {
       setQueryError('Query blocked: Only SELECT queries (or WITH...SELECT) are allowed in this textbox.')
       return
     }
-
     setQueryLoading(true)
     setQueryError(null)
     setQueryResults(null)
-
     try {
-      const params = null
-      const response = await axios.post(`${API_BASE_URL}/api/query`, {
-        query: queryText,
-        params: params
-      })
-
-      if (response.data.success) {
-        setQueryResults(response.data.data)
-      } else {
-        setQueryError(response.data.error)
-      }
+      const response = await axios.post(`${API_BASE_URL}/api/query`, { query: queryText, params: null })
+      if (response.data.success) setQueryResults(response.data.data)
+      else setQueryError(response.data.error)
     } catch (error) {
       setQueryError(error.response?.data?.detail || error.message)
     } finally {
@@ -1236,9 +739,7 @@ const executeQuery = async () => {
     }
   }
 
-  const handleCloneSuccess = () => {
-    loadConfigVersions()
-  }
+  const handleCloneSuccess = () => { loadConfigVersions() }
 
   const handleOpenTuneModal = () => {
     const decisions = markdownTableRef.current?.getChangeDecisions() || []
@@ -1251,31 +752,29 @@ const executeQuery = async () => {
     markdownTableRef.current?.resetDecisions()
   }
 
-  const handleActivateSuccess = () => {
-    loadConfigVersions()
+  // Called after Tune succeeds — mark those rows as submitted in TuningSession
+  const handleMarkSubmitted = async (versionId, ppgClusterIDs) => {
+    try {
+      await axios.post(`${API_BASE_URL}/api/tuning-session/mark-submitted`, {
+        VersionID: versionId,
+        PPGClusterIDs: ppgClusterIDs
+      })
+    } catch (err) {
+      console.error('Failed to mark session rows as submitted:', err)
+    }
   }
 
+  const handleActivateSuccess = () => { loadConfigVersions() }
+
   const renderTable = (data) => {
-    if (!data || data.length === 0) {
-      return <div className="loading">No results returned.</div>
-    }
-
+    if (!data || data.length === 0) return <div className="loading">No results returned.</div>
     const columns = Object.keys(data[0])
-
     return (
       <table>
-        <thead>
-          <tr>
-            {columns.map((col) => <th key={col}>{col}</th>)}
-          </tr>
-        </thead>
+        <thead><tr>{columns.map((col) => <th key={col}>{col}</th>)}</tr></thead>
         <tbody>
           {data.map((row, idx) => (
-            <tr key={idx}>
-              {columns.map((col) => (
-                <td key={col}>{row[col] !== null ? String(row[col]) : 'NULL'}</td>
-              ))}
-            </tr>
+            <tr key={idx}>{columns.map((col) => <td key={col}>{row[col] !== null ? String(row[col]) : 'NULL'}</td>)}</tr>
           ))}
         </tbody>
       </table>
@@ -1283,19 +782,10 @@ const executeQuery = async () => {
   }
 
   const actionButtonStyle = {
-    padding: '14px 24px',
-    fontSize: '15px',
-    fontWeight: 'bold',
-    background: '#4C7EFF',
-    color: 'white',
-    border: 'none',
-    borderRadius: '6px',
-    cursor: 'pointer',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: '8px',
-    transition: 'background 0.2s'
+    padding: '14px 24px', fontSize: '15px', fontWeight: 'bold',
+    background: '#4C7EFF', color: 'white', border: 'none', borderRadius: '6px',
+    cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+    gap: '8px', transition: 'background 0.2s'
   }
 
   return (
@@ -1303,63 +793,33 @@ const executeQuery = async () => {
       <div className="header" style={{ position: 'relative' }}>
         <h1>Retail Insight | HEB Waste Tuning Dashboard</h1>
         <p>Connected to: hebwmddev-sqlvm.ri-team.net</p>
-        <button 
-          onClick={() => setShowSettingsModal(true)}
-          style={{ 
-            position: 'absolute',
-            top: '10px',
-            right: '10px',
-            width: 'auto',
-            background: '#6c757d', 
-            color: 'white', 
-            border: 'none', 
-            padding: '6px 10px', 
-            borderRadius: '4px', 
-            cursor: 'pointer',
-            fontSize: '12px',
-            fontWeight: 'normal',
-            transform: 'none',
-            boxShadow: 'none'
-          }}
-        >
+        <button onClick={() => setShowSettingsModal(true)} style={{ position: 'absolute', top: '10px', right: '10px', width: 'auto', background: '#6c757d', color: 'white', border: 'none', padding: '6px 10px', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', fontWeight: 'normal', transform: 'none', boxShadow: 'none' }}>
           ⚙️ Settings
         </button>
       </div>
 
       {healthStatus && (
         <div className={`health-status ${healthStatus.status === 'healthy' ? 'healthy' : 'unhealthy'}`}>
-          {healthStatus.status === 'healthy' 
-            ? `Connected: ${healthStatus.message}` 
-            : `Disconnected: ${healthStatus.error || 'API unavailable'}`}
+          {healthStatus.status === 'healthy' ? `Connected: ${healthStatus.message}` : `Disconnected: ${healthStatus.error || 'API unavailable'}`}
         </div>
       )}
 
-      {/* Settings Modal */}
       <SettingsModal
         isOpen={showSettingsModal}
         onClose={() => setShowSettingsModal(false)}
         currentConfig={dbConfig}
         onSave={(newConfig) => setDbConfig(newConfig)}
-        onQueriesUpdated={() => {
-          loadConfigVersions()
-          loadMarkdownData()
-        }}
+        onQueriesUpdated={() => { loadConfigVersions(); loadMarkdownData() }}
       />
 
-      {/* Config Version Section */}
       <div className="card" style={{ marginBottom: '20px' }}>
         <h2>Active Config Version</h2>
-        
         {activeConfigLoading && <div className="loading">Loading active config version...</div>}
         {activeConfigError && <div className="error-message">{activeConfigError}</div>}
         {activeConfigVersion && <div className="results">{renderTable(activeConfigVersion)}</div>}
-
         {isMaxVersionActive() && (
-          <p style={{ marginTop: '12px', color: '#155724', fontSize: '0.9rem', fontStyle: 'italic' }}>
-            Max Config Version is Active
-          </p>
+          <p style={{ marginTop: '12px', color: '#155724', fontSize: '0.9rem', fontStyle: 'italic' }}>Max Config Version is Active</p>
         )}
-
         {shouldShowMaxVersion() && (
           <>
             <h2 style={{ marginTop: '24px' }}>MAX Config Version (Not Active)</h2>
@@ -1370,81 +830,49 @@ const executeQuery = async () => {
         )}
       </div>
 
-      {/* Current Default Markdowns Section */}
       <div className="card" style={{ marginBottom: '20px' }}>
         <h2>Current Default Markdowns</h2>
-        <MarkdownTable 
+        <MarkdownTable
           ref={markdownTableRef}
-          data={markdownData} 
-          loading={markdownLoading} 
-          error={markdownError} 
+          data={markdownData}
+          loading={markdownLoading}
+          error={markdownError}
+          maxConfigVersion={maxConfigVersion}
+          activeConfigVersion={activeConfigVersion}
         />
         {!markdownLoading && !markdownError && markdownData && (
           <div style={{ marginTop: '16px', display: 'flex', gap: '8px' }}>
-            <button 
-              onClick={loadMarkdownData} 
-              style={{ width: 'auto', padding: '8px 16px' }}
-            >
+            <button onClick={loadMarkdownData} style={{ width: 'auto', padding: '8px 16px' }}>
               Refresh Data
             </button>
-            <button 
-              onClick={() => markdownTableRef.current?.resetDecisions()} 
-              style={{ width: 'auto', padding: '8px 16px' }}
-            >
+            <button onClick={() => markdownTableRef.current?.resetDecisions()} style={{ width: 'auto', padding: '8px 16px' }}>
               Reset Planned Changes
             </button>
           </div>
         )}
       </div>
 
-      {/* Tuning Actions Section */}
       <div className="card" style={{ marginBottom: '20px' }}>
         <h2>Tuning Actions</h2>
-        <p style={{ color: '#666', marginBottom: '16px', fontSize: '14px' }}>
-          Common operations for managing config versions and tuning parameters.
-        </p>
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(3, 1fr)',
-          gap: '12px'
-        }}>
-          <button 
-            onClick={() => setShowCloneModal(true)}
-            style={actionButtonStyle}
-            onMouseOver={(e) => e.target.style.background = '#3a5ecc'}
-            onMouseOut={(e) => e.target.style.background = '#4C7EFF'}
-          >
+        <p style={{ color: '#666', marginBottom: '16px', fontSize: '14px' }}>Common operations for managing config versions and tuning parameters.</p>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px' }}>
+          <button onClick={() => setShowCloneModal(true)} style={actionButtonStyle}
+            onMouseOver={(e) => e.target.style.background = '#3a5ecc'} onMouseOut={(e) => e.target.style.background = '#4C7EFF'}>
             Clone Config Version
           </button>
-          <button 
-            onClick={handleOpenTuneModal}
-            style={actionButtonStyle}
-            onMouseOver={(e) => e.target.style.background = '#3a5ecc'}
-            onMouseOut={(e) => e.target.style.background = '#4C7EFF'}
-          >
+          <button onClick={handleOpenTuneModal} style={actionButtonStyle}
+            onMouseOver={(e) => e.target.style.background = '#3a5ecc'} onMouseOut={(e) => e.target.style.background = '#4C7EFF'}>
             Tune Default Percentages
           </button>
-          <button 
-            onClick={() => setShowActivateModal(true)}
-            style={actionButtonStyle}
-            onMouseOver={(e) => e.target.style.background = '#3a5ecc'}
-            onMouseOut={(e) => e.target.style.background = '#4C7EFF'}
-          >
+          <button onClick={() => setShowActivateModal(true)} style={actionButtonStyle}
+            onMouseOver={(e) => e.target.style.background = '#3a5ecc'} onMouseOut={(e) => e.target.style.background = '#4C7EFF'}>
             Activate Config Version
           </button>
-
         </div>
       </div>
 
-      {/* Clone Config Modal */}
-      <CloneConfigModal
-        isOpen={showCloneModal}
-        onClose={() => setShowCloneModal(false)}
-        activeVersion={activeConfigVersion}
-        onSuccess={handleCloneSuccess}
-      />
+      <CloneConfigModal isOpen={showCloneModal} onClose={() => setShowCloneModal(false)} activeVersion={activeConfigVersion} onSuccess={handleCloneSuccess} />
 
-      {/* Tune Default Percentages Modal */}
       <TuneDefaultPercentagesModal
         isOpen={showTuneModal}
         onClose={() => setShowTuneModal(false)}
@@ -1452,32 +880,19 @@ const executeQuery = async () => {
         maxVersion={maxConfigVersion}
         activeVersion={activeConfigVersion}
         onSuccess={handleTuneSuccess}
+        onMarkSubmitted={handleMarkSubmitted}
       />
 
-
-      {/* Activate Config Version Modal */}
-      <ActivateConfigModal
-        isOpen={showActivateModal}
-        onClose={() => setShowActivateModal(false)}
-        maxVersion={maxConfigVersion}
-        onSuccess={handleActivateSuccess}
-      />
+      <ActivateConfigModal isOpen={showActivateModal} onClose={() => setShowActivateModal(false)} maxVersion={maxConfigVersion} onSuccess={handleActivateSuccess} />
 
       <div className="dashboard">
-        {/* Query Panel */}
         <div className="card">
           <h2>Execute Query (SELECT)</h2>
           <div className="form-group">
             <label>SQL Query:</label>
-            <textarea
-              value={queryText}
-              onChange={(e) => setQueryText(e.target.value)}
-              placeholder="SELECT * FROM table_name WHERE id = ?"
-            />
+            <textarea value={queryText} onChange={(e) => setQueryText(e.target.value)} placeholder="SELECT * FROM table_name WHERE id = ?" />
           </div>
-          <button onClick={executeQuery} disabled={queryLoading}>
-            {queryLoading ? 'Executing...' : 'Run Query'}
-          </button>
+          <button onClick={executeQuery} disabled={queryLoading}>{queryLoading ? 'Executing...' : 'Run Query'}</button>
           {queryError && <div className="error-message">{queryError}</div>}
           {queryResults && (
             <div className="results">
@@ -1487,16 +902,11 @@ const executeQuery = async () => {
           )}
         </div>
 
-        {/* Quick Examples */}
         <div className="card">
           <h2>Quick Examples</h2>
           <div style={{ background: '#f8f9fa', padding: '12px', borderRadius: '6px', fontSize: '13px' }}>
-            <code style={{ display: 'block', marginBottom: '8px' }}>
-              SELECT * FROM [WASTE_HEB].[config].[ConfigVersions]
-            </code>
-            <code style={{ display: 'block',  }}>
-              SELECT TOP 10 * FROM [WASTE_HEB].wmd.ScalarFinalPercentage
-            </code>
+            <code style={{ display: 'block', marginBottom: '8px' }}>SELECT * FROM [WASTE_HEB].[config].[ConfigVersions]</code>
+            <code style={{ display: 'block' }}>SELECT TOP 10 * FROM [WASTE_HEB].wmd.ScalarFinalPercentage</code>
           </div>
         </div>
       </div>
