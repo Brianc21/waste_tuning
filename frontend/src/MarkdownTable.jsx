@@ -251,7 +251,6 @@ const MarkdownTable = forwardRef(function MarkdownTable({ data, loading, error, 
       return
     }
 
-    // Collect all rows that have a decision (Leave, Change, or Reset)
     const rows = data
       .filter(row => rowDecisions[row.PPGClusterID])
       .map(row => {
@@ -293,7 +292,7 @@ const MarkdownTable = forwardRef(function MarkdownTable({ data, loading, error, 
   }, [data, rowDecisions, rowTuningConfigs, maxConfigVersion])
 
   // -------------------------------------------------------------------------
-  // Load Proposed Changes — restore decisions from config.TuningSession
+  // Load Proposed Changes — compare DefaultPercentage between MAX and Active
   // -------------------------------------------------------------------------
   const handleLoadSession = useCallback(async () => {
     const maxVersionID = maxConfigVersion?.[0]?.VersionID
@@ -305,8 +304,8 @@ const MarkdownTable = forwardRef(function MarkdownTable({ data, loading, error, 
       return
     }
 
-    if (!maxVersionID) {
-      setSessionMessage({ type: 'error', text: 'Cannot load: Max Version ID is not available.' })
+    if (!maxVersionID || !activeVersionID) {
+      setSessionMessage({ type: 'error', text: 'Cannot load: Version information is not available.' })
       return
     }
 
@@ -323,17 +322,19 @@ const MarkdownTable = forwardRef(function MarkdownTable({ data, loading, error, 
     setSessionMessage(null)
 
     try {
-      const response = await axios.get(`${API_BASE_URL}/api/tuning-session/${maxVersionID}`)
+      const response = await axios.get(
+        `${API_BASE_URL}/api/tuning-session/load-proposed/${maxVersionID}/${activeVersionID}`
+      )
 
       if (response.data.success) {
         const savedRows = response.data.rows || []
 
         if (savedRows.length === 0) {
-          setSessionMessage({ type: 'error', text: `No saved session found for Version ${maxVersionID}.` })
+          setSessionMessage({ type: 'error', text: `No proposed changes found between Version ${activeVersionID} (active) and Version ${maxVersionID} (max).` })
           return
         }
 
-        // Rebuild rowDecisions and rowTuningConfigs from saved rows
+        // Rebuild rowDecisions and rowTuningConfigs from returned rows
         const newDecisions = {}
         const newConfigs = {}
 
@@ -349,9 +350,15 @@ const MarkdownTable = forwardRef(function MarkdownTable({ data, loading, error, 
 
         setRowDecisions(newDecisions)
         setRowTuningConfigs(newConfigs)
-        setSessionMessage({ type: 'success', text: `Loaded ${savedRows.length} row(s) from saved session for Version ${maxVersionID}.` })
+
+        const changeCount = savedRows.filter(r => r.Action === 'Change').length
+        const resetCount = savedRows.filter(r => r.Action === 'Reset').length
+        setSessionMessage({
+          type: 'success',
+          text: `Loaded proposed changes for Version ${maxVersionID}: ${changeCount} Change, ${resetCount} Reset.`
+        })
       } else {
-        setSessionMessage({ type: 'error', text: response.data.error || 'Failed to load session.' })
+        setSessionMessage({ type: 'error', text: response.data.error || 'Failed to load proposed changes.' })
       }
     } catch (err) {
       setSessionMessage({ type: 'error', text: err.response?.data?.detail || err.message })
@@ -665,7 +672,7 @@ const MarkdownTable = forwardRef(function MarkdownTable({ data, loading, error, 
         </div>
       </div>
 
-      {/* Save Session / Load Proposed Changes buttons — rendered here so App.jsx can place them alongside Refresh/Reset */}
+      {/* Save Session / Load Proposed Changes buttons */}
       <div style={{ marginTop: '16px', display: 'flex', gap: '8px' }}>
         <button
           onClick={handleSaveSession}

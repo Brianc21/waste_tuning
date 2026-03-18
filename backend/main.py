@@ -14,9 +14,7 @@ from contextlib import asynccontextmanager
 from db_proxy import db
 
 
-# Determine if running as packaged exe or development
 def get_base_path():
-    """Get the base path for static files."""
     if getattr(sys, 'frozen', False):
         return os.path.dirname(sys.executable)
     else:
@@ -141,12 +139,6 @@ def read_config():
 
 
 def write_config(server: str, database: str, port: str):
-    config = configparser.ConfigParser()
-    config['database'] = {
-        'server': server,
-        'database': database,
-        'port': port
-    }
     with open(CONFIG_PATH, 'w') as f:
         f.write("[database]\n")
         f.write("# SQL Server hostname or IP address\n")
@@ -232,12 +224,7 @@ def update_queries_database(old_db: str, new_db: str):
 async def get_config():
     try:
         config = read_config()
-        return ConfigResponse(
-            success=True,
-            server=config['server'],
-            database=config['database'],
-            port=config['port']
-        )
+        return ConfigResponse(success=True, server=config['server'], database=config['database'], port=config['port'])
     except Exception as e:
         return ConfigResponse(success=False, error=str(e))
 
@@ -255,12 +242,7 @@ async def save_config(request: ConfigRequest):
         write_config(request.server, request.database, request.port)
         print(f"[CONFIG] Updated: {old_db} -> {request.database}")
         print(f"[CONFIG] {message}")
-        return ConfigResponse(
-            success=True,
-            server=request.server,
-            database=request.database,
-            port=request.port
-        )
+        return ConfigResponse(success=True, server=request.server, database=request.database, port=request.port)
     except Exception as e:
         return ConfigResponse(success=False, error=str(e))
 
@@ -301,7 +283,6 @@ async def update_query(query_id: str, query_data: dict = Body(...)):
 
 @app.put("/api/queries/{query_id}/make-default")
 async def make_query_default(query_id: str, query_data: dict = Body(...)):
-    """Save a query as the new default (so Reset returns to this version)."""
     try:
         new_sql = query_data.get('sql')
         if not new_sql:
@@ -339,11 +320,7 @@ async def reset_queries():
         default_data = load_default_queries()
         save_queries(default_data)
         print('[QUERIES] Reset all queries to defaults')
-        return {
-            'success': True,
-            'message': 'All queries reset to defaults',
-            'queries': default_data.get('queries', [])
-        }
+        return {'success': True, 'message': 'All queries reset to defaults', 'queries': default_data.get('queries', [])}
     except Exception as e:
         return {'success': False, 'error': str(e)}
 
@@ -373,11 +350,7 @@ async def reset_single_query(query_id: str):
         current_data['queries'] = current_queries
         save_queries(current_data)
         print(f'[QUERIES] Reset query to default: {query_id}')
-        return {
-            'success': True,
-            'message': f'Query {query_id} reset to default',
-            'query': default_query
-        }
+        return {'success': True, 'message': f'Query {query_id} reset to default', 'query': default_query}
     except Exception as e:
         return {'success': False, 'error': str(e)}
 
@@ -390,8 +363,7 @@ async def reset_single_query(query_id: str):
 async def save_tuning_session(request: SaveTuningSessionRequest):
     """
     Save (upsert) tuning session decisions to config.TuningSession.
-    Uses SQL Server's logged-in user for SavedBy via SYSTEM_USER.
-    One row per VersionID + PPGClusterID — existing rows are updated.
+    Uses SQL Server's SYSTEM_USER for SavedBy.
     """
     try:
         if not request.Rows:
@@ -437,10 +409,7 @@ WHEN NOT MATCHED THEN
                 errors.append(f"PPGClusterID {row.PPGClusterID}: {str(e)}")
 
         if errors:
-            return {
-                'success': False,
-                'error': f"Saved {saved} rows but {len(errors)} failed: {'; '.join(errors)}"
-            }
+            return {'success': False, 'error': f"Saved {saved} rows but {len(errors)} failed: {'; '.join(errors)}"}
 
         print(f'[TUNING SESSION] Saved {saved} rows for VersionID {request.VersionID}')
         return {'success': True, 'saved': saved}
@@ -449,41 +418,67 @@ WHEN NOT MATCHED THEN
         return {'success': False, 'error': str(e)}
 
 
-@app.get("/api/tuning-session/{version_id}")
-async def load_tuning_session(version_id: int):
+@app.get("/api/tuning-session/load-proposed/{max_version_id}/{active_version_id}")
+async def load_proposed_changes(max_version_id: int, active_version_id: int):
     """
-    Load all saved tuning session rows for a given VersionID.
-    Returns both submitted and unsubmitted rows.
+    Load proposed changes by comparing DefaultPercentage rows between
+    the MAX version and the Active version.
+
+    Returns:
+    - Change: exists in MAX version AND config differs from Active version
+    - Reset: exists in Active version but NOT in MAX version
+    - Ignored: exists in MAX version AND matches Active version exactly
+    - Ignored: not in either version
     """
     try:
         sql = f"""
-SELECT 
-    VersionID,
-    PPGClusterID,
-    Action,
-    OperationType,
-    ConfigValue,
-    Comment,
-    SavedBy,
-    SavedOnUTC,
-    IsSubmitted,
-    SubmittedOnUTC
-FROM [WASTE_HEB].[config].[TuningSession]
-WHERE VersionID = {version_id}
+-- Rule 1: Change — exists in MAX version AND config differs from Active version
+SELECT
+    m.PPGClusterID,
+    'Change' AS Action,
+    m.ConfigOperationType AS OperationType,
+    m.ConfigValue
+FROM [WASTE_HEB].[config].[DefaultPercentage] m
+LEFT JOIN [WASTE_HEB].[config].[DefaultPercentage] a
+    ON m.PPGClusterID = a.PPGClusterID
+    AND a.VersionID = {active_version_id}
+WHERE m.VersionID = {max_version_id}
+  AND (
+    a.PPGClusterID IS NULL
+    OR m.ConfigValue <> a.ConfigValue
+    OR m.ConfigOperationType <> a.ConfigOperationType
+  )
+
+UNION ALL
+
+-- Rule 2: Reset — exists in Active version but NOT in MAX version
+SELECT
+    a.PPGClusterID,
+    'Reset' AS Action,
+    NULL AS OperationType,
+    NULL AS ConfigValue
+FROM [WASTE_HEB].[config].[DefaultPercentage] a
+WHERE a.VersionID = {active_version_id}
+  AND NOT EXISTS (
+    SELECT 1
+    FROM [WASTE_HEB].[config].[DefaultPercentage] m
+    WHERE m.PPGClusterID = a.PPGClusterID
+    AND m.VersionID = {max_version_id}
+  )
+
 ORDER BY PPGClusterID
 """
         results = db.execute_query(sql)
-        print(f'[TUNING SESSION] Loaded {len(results)} rows for VersionID {version_id}')
+        print(f'[TUNING SESSION] Loaded {len(results)} proposed changes (MAX={max_version_id}, Active={active_version_id})')
         return {'success': True, 'rows': results}
+
     except Exception as e:
         return {'success': False, 'error': str(e)}
 
 
 @app.post("/api/tuning-session/mark-submitted")
 async def mark_tuning_session_submitted(request: MarkSubmittedRequest):
-    """
-    Mark rows as submitted (IsSubmitted = 1) after Tune button is clicked.
-    """
+    """Mark rows as submitted after Tune button is clicked."""
     try:
         if not request.PPGClusterIDs:
             return {'success': False, 'error': 'No PPGClusterIDs provided'}
@@ -510,11 +505,7 @@ AND PPGClusterID IN ({ids})
 async def get_tables():
     try:
         tables = db.get_tables()
-        return QueryResponse(
-            success=True,
-            data=[{"table_name": table} for table in tables],
-            rows=len(tables)
-        )
+        return QueryResponse(success=True, data=[{"table_name": table} for table in tables], rows=len(tables))
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
