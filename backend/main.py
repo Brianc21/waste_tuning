@@ -690,12 +690,13 @@ WHERE VersionID = {max_version_id}
         sql_reinsert = f"""
 INSERT INTO [WASTE_HEB].[config].[DefaultPercentage]
     (VersionID, PPGClusterID, ConfigOperationType, ConfigValue,
-     EffectiveFrom, EffectiveTo, CreatedBy, CreatedOnUTC, Comment)
+     Comment, CreatedBy, CreatedOnUTC, UpdatedBy, UpdatedOnUTC)
 SELECT
     {max_version_id} AS VersionID,
     a.PPGClusterID, a.ConfigOperationType, a.ConfigValue,
-    a.EffectiveFrom, a.EffectiveTo,
-    SYSTEM_USER AS CreatedBy, GETUTCDATE() AS CreatedOnUTC, a.Comment
+    a.Comment,
+    SYSTEM_USER AS CreatedBy, GETUTCDATE() AS CreatedOnUTC,
+    SYSTEM_USER AS UpdatedBy, GETUTCDATE() AS UpdatedOnUTC
 FROM [WASTE_HEB].[config].[DefaultPercentage] a
 WHERE a.VersionID = {active_version_id}
   AND NOT EXISTS (

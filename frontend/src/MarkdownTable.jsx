@@ -85,14 +85,12 @@ const opLabel = (code) => {
 // Conflict Resolution Modal
 // =============================================================================
 function ConflictModal({ isOpen, conflicts, onResolve }) {
-  // Per-row choices: { [PPGClusterID]: 'session' | 'database' }
-  // Default to 'database' for all rows
   const [choices, setChoices] = useState({})
 
   useEffect(() => {
     if (isOpen && conflicts.length > 0) {
       const initial = {}
-      conflicts.forEach(r => { initial[r.PPGClusterID] = 'database' })
+      conflicts.forEach(r => { initial[r.PPGClusterID] = null })
       setChoices(initial)
     }
   }, [isOpen, conflicts])
@@ -111,10 +109,38 @@ function ConflictModal({ isOpen, conflicts, onResolve }) {
 
   const sessionCount = Object.values(choices).filter(v => v === 'session').length
   const databaseCount = Object.values(choices).filter(v => v === 'database').length
+  const undecidedCount = Object.values(choices).filter(v => v === null).length
+  const allDecided = undecidedCount === 0
 
-  const btnBase = {
-    padding: '4px 12px', border: 'none', borderRadius: '4px',
-    cursor: 'pointer', fontSize: '12px', fontWeight: '500'
+  const thBase = {
+    padding: '5px 6px', color: 'white', fontWeight: '600',
+    fontSize: '11px', whiteSpace: 'nowrap', textAlign: 'center',
+    position: 'sticky', top: 0, zIndex: 1
+  }
+
+  // max-height is ignored on <td> — use height + overflow on an inner div instead
+  const tdBase = {
+    padding: '0px',
+    fontSize: '11px',
+    textAlign: 'center',
+    borderBottom: '1px solid #dee2e6',
+  }
+
+  // Inner div inside each td enforces 2-line max
+  const tdInner = {
+    padding: '3px 6px',
+    lineHeight: '1.35',
+    height: '32px',       // exactly 2 lines of 11px text at 1.35 line-height ≈ 30px + padding
+    overflow: 'hidden',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+  }
+
+  const btnRow = {
+    padding: '3px 9px', border: 'none', borderRadius: '3px',
+    cursor: 'pointer', fontSize: '11px', fontWeight: '500',
+    whiteSpace: 'nowrap'
   }
 
   return (
@@ -124,103 +150,151 @@ function ConflictModal({ isOpen, conflicts, onResolve }) {
       display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2000
     }}>
       <div style={{
-        background: 'white', borderRadius: '8px', padding: '24px',
-        width: '1200px', maxWidth: '97vw', maxHeight: '90vh',
+        background: 'white', borderRadius: '8px', padding: '20px',
+        width: '97vw', maxWidth: '1400px', maxHeight: '90vh',
         display: 'flex', flexDirection: 'column',
         boxShadow: '0 4px 24px rgba(0,0,0,0.4)'
       }}>
 
         {/* Header */}
-        <h2 style={{ marginTop: 0, marginBottom: '6px', color: '#333' }}>
+        <h2 style={{ marginTop: 0, marginBottom: '4px', color: '#333', fontSize: '18px' }}>
           ⚠️ Session Conflicts Detected
         </h2>
-        <p style={{ margin: '0 0 12px 0', color: '#666', fontSize: '14px' }}>
+        <p style={{ margin: '0 0 10px 0', color: '#666', fontSize: '13px' }}>
           {conflicts.length} PPG Cluster(s) have differences between your saved session and the database.
-          Choose which values to use for each row, or apply one choice to all.
+          Choose which values to use for each row, then click Confirm.
+          {undecidedCount > 0 && <span style={{ color: '#dc3545', fontWeight: '600' }}> ({undecidedCount} undecided)</span>}
         </p>
 
-        {/* Apply to All */}
+        {/* Apply to All — inline row, buttons sized to content */}
         <div style={{
-          display: 'flex', alignItems: 'center', gap: '12px',
-          padding: '10px 14px', background: '#f8f9fa', borderRadius: '6px',
-          marginBottom: '12px', flexWrap: 'wrap'
+          display: 'flex', alignItems: 'center', gap: '10px',
+          padding: '8px 12px', background: '#f8f9fa', borderRadius: '6px',
+          marginBottom: '10px', overflow: 'hidden'
         }}>
-          <span style={{ fontWeight: '600', fontSize: '13px', color: '#333' }}>Apply to All:</span>
+          <span style={{ fontWeight: '600', fontSize: '12px', color: '#333', whiteSpace: 'nowrap', flexShrink: 0 }}>Apply to All:</span>
           <button onClick={() => setAll('session')}
-            style={{ ...btnBase, background: '#0d6efd', color: 'white', padding: '6px 18px' }}>
-            ← Previous Session Data
+            style={{ padding: '6px 14px', background: '#0d6efd', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', fontWeight: '500', whiteSpace: 'nowrap', flex: '0 0 auto', width: '200px' }}>
+            Use Previous Session Data
           </button>
           <button onClick={() => setAll('database')}
-            style={{ ...btnBase, background: '#198754', color: 'white', padding: '6px 18px' }}>
-            Load from Database →
+            style={{ padding: '6px 14px', background: '#198754', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', fontWeight: '500', whiteSpace: 'nowrap', flex: '0 0 auto', width: '200px' }}>
+            Use Database Data
           </button>
-          <span style={{ marginLeft: 'auto', fontSize: '12px', color: '#666' }}>
-            {sessionCount} using Session &nbsp;|&nbsp; {databaseCount} using Database
+          <button onClick={() => {
+            const reset = {}
+            conflicts.forEach(r => { reset[r.PPGClusterID] = null })
+            setChoices(reset)
+          }}
+            style={{ padding: '6px 14px', background: '#6c757d', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', fontWeight: '500', whiteSpace: 'nowrap', flex: '0 0 auto', width: '200px' }}>
+            Clear Selections
+          </button>
+          <span style={{ fontSize: '11px', color: '#555', whiteSpace: 'nowrap', flex: '0 0 auto' }}>
+            {sessionCount} Session &nbsp;|&nbsp; {databaseCount} Database &nbsp;|&nbsp;
+            <span style={{ color: undecidedCount > 0 ? '#dc3545' : '#198754', fontWeight: undecidedCount > 0 ? '600' : 'normal' }}>
+              {undecidedCount} Undecided
+            </span>
           </span>
         </div>
 
-        {/* Conflict table */}
-        <div style={{ flex: 1, overflow: 'auto', border: '1px solid #ddd', borderRadius: '4px', marginBottom: '16px' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
-            <thead style={{ position: 'sticky', top: 0 }}>
+        {/* Conflict table — explicit height for scrollbar to work */}
+        <div style={{
+          overflowY: 'auto',
+          overflowX: 'auto',
+          border: '1px solid #ddd',
+          borderRadius: '4px',
+          marginBottom: '12px',
+          height: 'calc(90vh - 230px)',
+          minHeight: '200px',
+        }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '11px', tableLayout: 'fixed' }}>
+            <colgroup>
+              <col style={{ width: '52px' }} />
+              <col style={{ width: '108px' }} />
+              <col style={{ width: '108px' }} />
+              <col style={{ width: '108px' }} />
+              <col style={{ width: '108px' }} />
+              <col style={{ width: '155px' }} />
+              <col style={{ width: '62px' }} />
+              <col style={{ width: '58px' }} />
+              <col style={{ width: '62px' }} />
+              <col style={{ width: '95px' }} />
+              <col style={{ width: '58px' }} />
+              <col style={{ width: '58px' }} />
+              <col style={{ width: '58px' }} />
+              <col style={{ width: '165px' }} />
+            </colgroup>
+            <thead>
               <tr>
-                <th style={{ padding: '8px', background: '#495057', color: 'white', textAlign: 'center', whiteSpace: 'nowrap' }}>PPG ID</th>
-                <th style={{ padding: '8px', background: '#495057', color: 'white', textAlign: 'left', whiteSpace: 'nowrap' }}>Level 4</th>
-                <th style={{ padding: '8px', background: '#495057', color: 'white', textAlign: 'left', whiteSpace: 'nowrap' }}>Level 3</th>
-                <th style={{ padding: '8px', background: '#495057', color: 'white', textAlign: 'left', whiteSpace: 'nowrap' }}>Level 2</th>
-                <th style={{ padding: '8px', background: '#495057', color: 'white', textAlign: 'left', whiteSpace: 'nowrap', borderRight: '2px solid #adb5bd' }}>Level 1</th>
-                <th style={{ padding: '8px', background: '#495057', color: 'white', textAlign: 'left', borderRight: '2px solid #adb5bd' }}>Conflict Reason</th>
-                {/* Session columns */}
-                <th style={{ padding: '8px', background: '#0d6efd', color: 'white', textAlign: 'center', whiteSpace: 'nowrap' }}>Session Action</th>
-                <th style={{ padding: '8px', background: '#0d6efd', color: 'white', textAlign: 'center', whiteSpace: 'nowrap' }}>Session Op</th>
-                <th style={{ padding: '8px', background: '#0d6efd', color: 'white', textAlign: 'center', whiteSpace: 'nowrap' }}>Session Value</th>
-                <th style={{ padding: '8px', background: '#0d6efd', color: 'white', textAlign: 'center', whiteSpace: 'nowrap', borderRight: '2px solid #adb5bd' }}>Saved</th>
-                {/* Database columns */}
-                <th style={{ padding: '8px', background: '#198754', color: 'white', textAlign: 'center', whiteSpace: 'nowrap' }}>DB Action</th>
-                <th style={{ padding: '8px', background: '#198754', color: 'white', textAlign: 'center', whiteSpace: 'nowrap' }}>DB Op</th>
-                <th style={{ padding: '8px', background: '#198754', color: 'white', textAlign: 'center', whiteSpace: 'nowrap', borderRight: '2px solid #adb5bd' }}>DB Value</th>
-                {/* Choice */}
-                <th style={{ padding: '8px', background: '#6c757d', color: 'white', textAlign: 'center', whiteSpace: 'nowrap' }}>Use</th>
+                <th style={{ ...thBase, background: '#495057', borderRight: '1px solid #6c757d' }}>PPG ID</th>
+                <th style={{ ...thBase, background: '#495057' }}>Level 4</th>
+                <th style={{ ...thBase, background: '#495057' }}>Level 3</th>
+                <th style={{ ...thBase, background: '#495057' }}>Level 2</th>
+                <th style={{ ...thBase, background: '#495057', borderRight: '2px solid #adb5bd' }}>Level 1</th>
+                <th style={{ ...thBase, background: '#495057', borderRight: '2px solid #adb5bd' }}>Conflict Reason</th>
+                <th style={{ ...thBase, background: '#0d6efd' }}>Sess. Action</th>
+                <th style={{ ...thBase, background: '#0d6efd' }}>Sess. Op</th>
+                <th style={{ ...thBase, background: '#0d6efd' }}>Sess. Value</th>
+                <th style={{ ...thBase, background: '#0d6efd', borderRight: '2px solid #adb5bd' }}>Saved</th>
+                <th style={{ ...thBase, background: '#198754' }}>DB Action</th>
+                <th style={{ ...thBase, background: '#198754' }}>DB Op</th>
+                <th style={{ ...thBase, background: '#198754', borderRight: '2px solid #adb5bd' }}>DB Value</th>
+                <th style={{ ...thBase, background: '#6c757d' }}>Use</th>
               </tr>
             </thead>
             <tbody>
               {conflicts.map((row, idx) => {
-                const choice = choices[row.PPGClusterID] || 'database'
+                const choice = choices[row.PPGClusterID]
                 const isSession = choice === 'session'
                 const isDatabase = choice === 'database'
-                const dbAction = row.DB_DerivedAction || (row.DB_ConfigValue !== null && row.DB_ConfigValue !== undefined ? 'Change' : '—')
+                const isUndecided = choice === null
+                const dbAction = row.DB_DerivedAction || '—'
 
                 return (
-                  <tr key={row.PPGClusterID} style={{ background: idx % 2 === 0 ? '#fff' : '#f8f9fa' }}>
-                    <td style={{ padding: '6px 8px', textAlign: 'center', fontWeight: '600' }}>{row.PPGClusterID}</td>
-                    <td style={{ padding: '6px 8px', fontSize: '11px', color: '#555' }}>{row.HierarchyLevel4Name || '—'}</td>
-                    <td style={{ padding: '6px 8px', fontSize: '11px', color: '#555' }}>{row.HierarchyLevel3Name || '—'}</td>
-                    <td style={{ padding: '6px 8px', fontSize: '11px', color: '#555' }}>{row.HierarchyLevel2Name || '—'}</td>
-                    <td style={{ padding: '6px 8px', fontSize: '11px', color: '#555', borderRight: '2px solid #dee2e6' }}>{row.HierarchyLevel1Name || '—'}</td>
-                    <td style={{ padding: '6px 8px', fontSize: '11px', color: '#856404', background: '#fff3cd', borderRight: '2px solid #dee2e6', maxWidth: '220px' }}>{row.ConflictReason}</td>
-                    {/* Session values */}
-                    <td style={{ padding: '6px 8px', textAlign: 'center', background: isSession ? '#cfe2ff' : '#e8f0ff' }}>{row.TS_Action || '—'}</td>
-                    <td style={{ padding: '6px 8px', textAlign: 'center', background: isSession ? '#cfe2ff' : '#e8f0ff' }}>{opLabel(row.TS_OperationType)}</td>
-                    <td style={{ padding: '6px 8px', textAlign: 'center', background: isSession ? '#cfe2ff' : '#e8f0ff' }}>{row.TS_ConfigValue !== null && row.TS_ConfigValue !== undefined ? row.TS_ConfigValue : '—'}</td>
-                    <td style={{ padding: '6px 8px', textAlign: 'center', fontSize: '10px', color: '#666', background: isSession ? '#cfe2ff' : '#e8f0ff', borderRight: '2px solid #dee2e6' }}>
-                      {row.TS_SavedOnUTC || '—'}<br /><span style={{ color: '#888' }}>{row.TS_SavedBy || ''}</span>
+                  <tr key={row.PPGClusterID} style={{ background: isUndecided ? (idx % 2 === 0 ? '#fffff8' : '#fffef0') : (idx % 2 === 0 ? '#fff' : '#f8f9fa') }}>
+                    <td style={{ ...tdBase, borderRight: '1px solid #dee2e6' }}><div style={{ ...tdInner, fontWeight: '600', justifyContent: 'center' }}>{row.PPGClusterID}</div></td>
+                    <td style={{ ...tdBase }}><div style={{ ...tdInner, justifyContent: 'center' }} title={row.HierarchyLevel4Name}>{row.HierarchyLevel4Name || '—'}</div></td>
+                    <td style={{ ...tdBase }}><div style={{ ...tdInner, justifyContent: 'center' }} title={row.HierarchyLevel3Name}>{row.HierarchyLevel3Name || '—'}</div></td>
+                    <td style={{ ...tdBase }}><div style={{ ...tdInner, justifyContent: 'center' }} title={row.HierarchyLevel2Name}>{row.HierarchyLevel2Name || '—'}</div></td>
+                    <td style={{ ...tdBase, borderRight: '2px solid #dee2e6' }}><div style={{ ...tdInner, justifyContent: 'center' }} title={row.HierarchyLevel1Name}>{row.HierarchyLevel1Name || '—'}</div></td>
+
+                    {/* Conflict reason — 2 lines max */}
+                    <td style={{ ...tdBase, background: idx % 2 === 0 ? '#fff8e1' : '#fef9e3', borderRight: '2px solid #dee2e6' }}>
+                      <div style={{ ...tdInner, justifyContent: 'center', alignItems: 'flex-start', color: '#856404', whiteSpace: 'normal', lineHeight: '1.3', paddingTop: '4px' }} title={row.ConflictReason}>
+                        {row.ConflictReason}
+                      </div>
                     </td>
-                    {/* DB values */}
-                    <td style={{ padding: '6px 8px', textAlign: 'center', background: isDatabase ? '#d1e7dd' : '#e8f5ee' }}>{dbAction}</td>
-                    <td style={{ padding: '6px 8px', textAlign: 'center', background: isDatabase ? '#d1e7dd' : '#e8f5ee' }}>{opLabel(row.DB_OperationType)}</td>
-                    <td style={{ padding: '6px 8px', textAlign: 'center', background: isDatabase ? '#d1e7dd' : '#e8f5ee', borderRight: '2px solid #dee2e6' }}>
-                      {row.DB_ConfigValue !== null && row.DB_ConfigValue !== undefined ? row.DB_ConfigValue : '—'}
+
+                    {/* Session columns */}
+                    <td style={{ ...tdBase, background: isSession ? '#cfe2ff' : '#eef3ff' }}><div style={tdInner}>{row.TS_Action || '—'}</div></td>
+                    <td style={{ ...tdBase, background: isSession ? '#cfe2ff' : '#eef3ff' }}><div style={tdInner}>{opLabel(row.TS_OperationType)}</div></td>
+                    <td style={{ ...tdBase, background: isSession ? '#cfe2ff' : '#eef3ff' }}><div style={tdInner}>{row.TS_ConfigValue !== null && row.TS_ConfigValue !== undefined ? row.TS_ConfigValue : '—'}</div></td>
+                    <td style={{ ...tdBase, background: isSession ? '#cfe2ff' : '#eef3ff', borderRight: '2px solid #dee2e6' }}>
+                      <div style={{ ...tdInner, flexDirection: 'column', fontSize: '10px', color: '#555', gap: '1px', justifyContent: 'center', whiteSpace: 'nowrap' }}>
+                        <span>{row.TS_SavedOnUTC || '—'}</span>
+                        {row.TS_SavedBy && <span style={{ color: '#888' }}>{row.TS_SavedBy}</span>}
+                      </div>
                     </td>
+
+                    {/* DB columns */}
+                    <td style={{ ...tdBase, background: isDatabase ? '#d1e7dd' : '#edf7f1' }}><div style={tdInner}>{dbAction}</div></td>
+                    <td style={{ ...tdBase, background: isDatabase ? '#d1e7dd' : '#edf7f1' }}><div style={tdInner}>{opLabel(row.DB_OperationType)}</div></td>
+                    <td style={{ ...tdBase, background: isDatabase ? '#d1e7dd' : '#edf7f1', borderRight: '2px solid #dee2e6' }}>
+                      <div style={tdInner}>{row.DB_ConfigValue !== null && row.DB_ConfigValue !== undefined ? row.DB_ConfigValue : '—'}</div>
+                    </td>
+
                     {/* Per-row choice buttons */}
-                    <td style={{ padding: '6px 8px', textAlign: 'center', whiteSpace: 'nowrap' }}>
-                      <button onClick={() => setOne(row.PPGClusterID, 'session')}
-                        style={{ ...btnBase, marginRight: '4px', background: isSession ? '#0d6efd' : '#e9ecef', color: isSession ? 'white' : '#495057' }}>
-                        Session
-                      </button>
-                      <button onClick={() => setOne(row.PPGClusterID, 'database')}
-                        style={{ ...btnBase, background: isDatabase ? '#198754' : '#e9ecef', color: isDatabase ? 'white' : '#495057' }}>
-                        Database
-                      </button>
+                    <td style={{ ...tdBase, background: isUndecided ? '#fff8e1' : 'inherit' }}>
+                      <div style={{ ...tdInner, gap: '4px' }}>
+                        <button onClick={() => setOne(row.PPGClusterID, 'session')}
+                          style={{ ...btnRow, background: isSession ? '#0d6efd' : '#e9ecef', color: isSession ? 'white' : '#495057' }}>
+                          Session
+                        </button>
+                        <button onClick={() => setOne(row.PPGClusterID, 'database')}
+                          style={{ ...btnRow, background: isDatabase ? '#198754' : '#e9ecef', color: isDatabase ? 'white' : '#495057' }}>
+                          Database
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 )
@@ -229,14 +303,25 @@ function ConflictModal({ isOpen, conflicts, onResolve }) {
           </table>
         </div>
 
-        {/* Confirm */}
-        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
-          <span style={{ alignSelf: 'center', fontSize: '13px', color: '#666' }}>
-            {sessionCount} row(s) using Session &nbsp;|&nbsp; {databaseCount} row(s) using Database
+        {/* Footer */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <span style={{ fontSize: '12px', color: '#666' }}>
+            {sessionCount} using Session &nbsp;|&nbsp; {databaseCount} using Database
+            {undecidedCount > 0 && <span style={{ color: '#dc3545', fontWeight: '600' }}> &nbsp;|&nbsp; {undecidedCount} still undecided</span>}
           </span>
-          <button onClick={() => onResolve(choices)}
-            style={{ padding: '10px 28px', background: '#4C7EFF', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '14px', fontWeight: '600' }}>
-            Confirm
+          <button
+            onClick={() => allDecided && onResolve(choices)}
+            disabled={!allDecided}
+            style={{
+              padding: '6px 14px',
+              width: '200px',
+              marginRight: '15px',
+              background: allDecided ? '#4C7EFF' : '#ccc',
+              color: 'white', border: 'none', borderRadius: '4px',
+              cursor: allDecided ? 'pointer' : 'not-allowed',
+              fontSize: '12px', fontWeight: '500', whiteSpace: 'nowrap'
+            }}>
+            {allDecided ? 'Confirm' : `Confirm (${undecidedCount} undecided)`}
           </button>
         </div>
       </div>
@@ -291,9 +376,6 @@ const MarkdownTable = forwardRef(function MarkdownTable({ data, loading, error, 
     else { setSortColumn(column); setSortDirection(isDColumn(column) ? 'desc' : 'asc') }
   }, [sortColumn])
 
-  // -------------------------------------------------------------------------
-  // Apply rows to state
-  // -------------------------------------------------------------------------
   const applyRows = useCallback((rows) => {
     const newDecisions = {}
     const newConfigs = {}
@@ -302,8 +384,7 @@ const MarkdownTable = forwardRef(function MarkdownTable({ data, loading, error, 
       if (row.Action === 'Change') {
         newConfigs[row.PPGClusterID] = {
           operationType: row.OperationType || 'S',
-          configValue: row.ConfigValue !== null && row.ConfigValue !== undefined
-            ? String(row.ConfigValue) : ''
+          configValue: row.ConfigValue !== null && row.ConfigValue !== undefined ? String(row.ConfigValue) : ''
         }
       }
     })
@@ -311,88 +392,47 @@ const MarkdownTable = forwardRef(function MarkdownTable({ data, loading, error, 
     setRowTuningConfigs(newConfigs)
   }, [])
 
-  // -------------------------------------------------------------------------
-  // Conflict resolution — choices is { [PPGClusterID]: 'session' | 'database' }
-  // -------------------------------------------------------------------------
   const handleConflictResolve = useCallback((choices) => {
     setConflictModalOpen(false)
-
     const conflictRows = pendingConflicts.map(row => {
-      const choice = choices[row.PPGClusterID] || 'database'
+      const choice = choices[row.PPGClusterID]
       if (choice === 'session') {
-        return {
-          PPGClusterID: row.PPGClusterID,
-          Action: row.TS_Action,
-          OperationType: row.TS_OperationType,
-          ConfigValue: row.TS_ConfigValue
-        }
+        return { PPGClusterID: row.PPGClusterID, Action: row.TS_Action, OperationType: row.TS_OperationType, ConfigValue: row.TS_ConfigValue }
       } else {
-        // Use database values
         if (row.DB_DerivedAction === 'Change') {
-          return {
-            PPGClusterID: row.PPGClusterID,
-            Action: 'Change',
-            OperationType: row.DB_OperationType,
-            ConfigValue: row.DB_ConfigValue
-          }
+          return { PPGClusterID: row.PPGClusterID, Action: 'Change', OperationType: row.DB_OperationType, ConfigValue: row.DB_ConfigValue }
         } else if (row.DB_DerivedAction === 'Reset') {
-          return {
-            PPGClusterID: row.PPGClusterID,
-            Action: 'Reset',
-            OperationType: null,
-            ConfigValue: null
-          }
+          return { PPGClusterID: row.PPGClusterID, Action: 'Reset', OperationType: null, ConfigValue: null }
         } else {
-          // DB says Leave (stale session) — clear the decision
-          return {
-            PPGClusterID: row.PPGClusterID,
-            Action: 'Leave',
-            OperationType: null,
-            ConfigValue: null
-          }
+          return { PPGClusterID: row.PPGClusterID, Action: 'Leave', OperationType: null, ConfigValue: null }
         }
       }
     })
-
     const allRows = [...pendingCleanRows, ...conflictRows]
     applyRows(allRows)
-
     const changeCount = allRows.filter(r => r.Action === 'Change').length
     const resetCount = allRows.filter(r => r.Action === 'Reset').length
     const leaveCount = allRows.filter(r => r.Action === 'Leave').length
-    setSessionMessage({
-      type: 'success',
-      text: `Loaded ${allRows.length} rows (${changeCount} Change, ${resetCount} Reset, ${leaveCount} Leave).`
-    })
-
+    setSessionMessage({ type: 'success', text: `Loaded ${allRows.length} rows (${changeCount} Change, ${resetCount} Reset, ${leaveCount} Leave).` })
     setPendingConflicts([])
     setPendingCleanRows([])
   }, [pendingConflicts, pendingCleanRows, applyRows])
 
-  // -------------------------------------------------------------------------
-  // Core fetch-and-apply — takes explicit version IDs to avoid stale closures
-  // -------------------------------------------------------------------------
   const fetchAndApply = useCallback(async (maxVersionID, activeVersionID, silent = false) => {
     if (!maxVersionID || !activeVersionID) return
     if (maxVersionID === activeVersionID) return
-
     try {
-      const response = await axios.get(
-        `${API_BASE_URL}/api/tuning-session/conflicts/${maxVersionID}/${activeVersionID}`
-      )
+      const response = await axios.get(`${API_BASE_URL}/api/tuning-session/conflicts/${maxVersionID}/${activeVersionID}`)
       if (!response.data.success) {
         if (!silent) setSessionMessage({ type: 'error', text: response.data.error || 'Failed to load proposed changes.' })
         return
       }
-
       const conflicts = response.data.conflicts || []
       const cleanRows = response.data.clean || []
-
       if (conflicts.length === 0 && cleanRows.length === 0) {
         if (!silent) setSessionMessage({ type: 'error', text: `No proposed changes found between Version ${activeVersionID} (active) and Version ${maxVersionID} (max).` })
         return
       }
-
       if (conflicts.length > 0) {
         setPendingConflicts(conflicts)
         setPendingCleanRows(cleanRows)
@@ -411,7 +451,6 @@ const MarkdownTable = forwardRef(function MarkdownTable({ data, loading, error, 
     }
   }, [applyRows])
 
-  // Auto-load on mount
   useEffect(() => {
     if (autoLoadedRef.current) return
     if (!data || data.length === 0) return
@@ -423,34 +462,21 @@ const MarkdownTable = forwardRef(function MarkdownTable({ data, loading, error, 
     fetchAndApply(maxVersionID, activeVersionID, true)
   }, [data, maxConfigVersion, activeConfigVersion, fetchAndApply])
 
-  // -------------------------------------------------------------------------
-  // Manual Load
-  // -------------------------------------------------------------------------
   const handleLoadSession = useCallback(async () => {
     const maxVersionID = maxConfigVersion?.[0]?.VersionID
     const activeVersionID = activeConfigVersion?.[0]?.VersionID
-    if (maxVersionID && activeVersionID && maxVersionID === activeVersionID) {
-      alert('Max Version is Active Version. There are no proposed changes to load.')
-      return
-    }
-    if (!maxVersionID || !activeVersionID) {
-      setSessionMessage({ type: 'error', text: 'Cannot load: Version information is not available.' })
-      return
-    }
+    if (maxVersionID && activeVersionID && maxVersionID === activeVersionID) { alert('Max Version is Active Version. There are no proposed changes to load.'); return }
+    if (!maxVersionID || !activeVersionID) { setSessionMessage({ type: 'error', text: 'Cannot load: Version information is not available.' }); return }
     const hasExistingDecisions = Object.keys(rowDecisions).length > 0
     if (hasExistingDecisions) {
       const confirmed = window.confirm('You have unsaved decisions in your current session. Loading proposed changes will replace them. Continue?')
       if (!confirmed) return
     }
-    setSessionLoading(true)
-    setSessionMessage(null)
+    setSessionLoading(true); setSessionMessage(null)
     await fetchAndApply(maxVersionID, activeVersionID, false)
     setSessionLoading(false)
   }, [maxConfigVersion, activeConfigVersion, rowDecisions, fetchAndApply])
 
-  // -------------------------------------------------------------------------
-  // Save Session
-  // -------------------------------------------------------------------------
   const handleSaveSession = useCallback(async () => {
     if (!data) return
     const maxVersionID = maxConfigVersion?.[0]?.VersionID
@@ -461,11 +487,9 @@ const MarkdownTable = forwardRef(function MarkdownTable({ data, loading, error, 
         const decision = rowDecisions[row.PPGClusterID]
         const tuningConfig = rowTuningConfigs[row.PPGClusterID] || {}
         return {
-          PPGClusterID: row.PPGClusterID,
-          Action: decision,
+          PPGClusterID: row.PPGClusterID, Action: decision,
           OperationType: decision === 'Change' ? (tuningConfig.operationType || null) : null,
-          ConfigValue: decision === 'Change' && tuningConfig.configValue !== ''
-            ? parseFloat(tuningConfig.configValue) : null,
+          ConfigValue: decision === 'Change' && tuningConfig.configValue !== '' ? parseFloat(tuningConfig.configValue) : null,
           Comment: null
         }
       })
@@ -479,9 +503,6 @@ const MarkdownTable = forwardRef(function MarkdownTable({ data, loading, error, 
     finally { setSessionSaving(false) }
   }, [data, rowDecisions, rowTuningConfigs, maxConfigVersion])
 
-  // -------------------------------------------------------------------------
-  // Reset ALL
-  // -------------------------------------------------------------------------
   const handleResetAll = useCallback(async () => {
     const maxVersionID = maxConfigVersion?.[0]?.VersionID
     const activeVersionID = activeConfigVersion?.[0]?.VersionID
@@ -564,7 +585,17 @@ const MarkdownTable = forwardRef(function MarkdownTable({ data, loading, error, 
     setRowTuningConfigs(prev => ({ ...prev, [ppgClusterId]: { ...prev[ppgClusterId], [field]: value } }))
   }, [])
 
-  const resetDecisions = useCallback(() => { setRowDecisions({}); setRowTuningConfigs({}) }, [])
+  const resetDecisions = useCallback(async () => {
+    const maxVersionID = maxConfigVersion?.[0]?.VersionID
+    const activeVersionID = activeConfigVersion?.[0]?.VersionID
+    if (!maxVersionID || !activeVersionID || maxVersionID === activeVersionID) {
+      setRowDecisions({})
+      setRowTuningConfigs({})
+      return
+    }
+    setSessionMessage(null)
+    await fetchAndApply(maxVersionID, activeVersionID, false)
+  }, [maxConfigVersion, activeConfigVersion, fetchAndApply])
 
   const getChangeDecisions = useCallback(() => {
     if (!data) return []
@@ -586,15 +617,8 @@ const MarkdownTable = forwardRef(function MarkdownTable({ data, loading, error, 
   }, [data, rowDecisions, rowTuningConfigs])
 
   useImperativeHandle(ref, () => ({
-    resetDecisions,
-    getChangeDecisions,
-    handleLoadSession,
-    handleSaveSession,
-    handleResetAll,
-    sessionSaving,
-    sessionLoading,
-    sessionResetting,
-    sessionMessage,
+    resetDecisions, getChangeDecisions, handleLoadSession, handleSaveSession, handleResetAll,
+    sessionSaving, sessionLoading, sessionResetting, sessionMessage,
     clearSessionMessage: () => setSessionMessage(null)
   }), [resetDecisions, getChangeDecisions, handleLoadSession, handleSaveSession, handleResetAll, sessionSaving, sessionLoading, sessionResetting, sessionMessage])
 
@@ -703,7 +727,6 @@ const MarkdownTable = forwardRef(function MarkdownTable({ data, loading, error, 
 
       <p style={{ marginBottom: '12px', color: '#666' }}>Showing <strong>{sortedData.length}</strong> of <strong>{data.length}</strong> rows</p>
 
-      {/* Table Grid */}
       <div style={{ display: 'grid', gridTemplateColumns: `${TOTAL_FROZEN_WIDTH}px 1fr`, gridTemplateRows: 'auto 1fr', border: '1px solid #ddd', borderRadius: '4px', overflow: 'hidden', maxHeight: '420px' }}>
         <div style={{ background: '#4C7EFF', borderRight: '2px solid #3a5ecc', borderBottom: '2px solid #3a5ecc', overflow: 'hidden' }}>
           <table style={{ borderCollapse: 'collapse', tableLayout: 'fixed', width: TOTAL_FROZEN_WIDTH }}>
