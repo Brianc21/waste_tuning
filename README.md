@@ -33,7 +33,6 @@ Azure SQL Server (hebwmddev-sqlvm.ri-team.net)
   - Clone Config Version (with direct execution)
   - Tune Default Percentages (with direct execution)
   - Activate Config Version (with confirmation dialog)
-- **Preset query library** with categorized queries
 - **Execute SELECT queries** with real-time results (protected - SELECT only)
 - **Settings Modal** with database configuration (auto-populates even on connection failure)
 - Quick example queries for reference
@@ -57,16 +56,21 @@ Azure SQL Server (hebwmddev-sqlvm.ri-team.net)
   - Clear Filters button
 - **Tuning workflow**:
   - Action column with **Leave/Change/Reset** buttons per row
-  - Reset button enabled only for rows with existing config (non-zero D values)
+  - Reset button enabled only for rows that have at least one non-zero D column value (used as a proxy for rows that have active markdown data worth resetting)
   - **Operation column**: Select Subtract/Add/Multiply/Divide/Override (enabled when Change selected)
   - **Value column**: Enter config value (enabled when Change selected)
   - Decision summary showing **Leave/Change/Reset/Undecided** counts
   - "Hide Leave rows" checkbox to hide rows marked as Leave
   - "Hide Change rows" checkbox to hide rows marked as Change
-  - "Hide Reset rows" checkbox to hide rows marked as Reset
   - "Show Only Change rows" checkbox to see only rows marked for tuning
+  - "Hide Reset rows" checkbox to hide rows marked as Reset
   - "Show Only Reset rows" checkbox to see only rows marked for reset
-  - "Reset Planned Changes" button to clear all decisions
+- **Session management** buttons below the table:
+  - **Refresh Data** — reload the markdown data from the database
+  - **Load Proposed Changes** — fetch saved session decisions from the DB with conflict detection
+  - **Save Session** — persist current decisions to the DB for the max config version
+  - **Reset Unsaved Session Changes** — revert to the last saved session state from the DB
+  - **Reset ALL Planned Changes** — delete all session data and make the max version's config match the active version (destructive, requires confirmation)
 - **Sortable columns**:
   - Click any column header to sort
   - Toggle between ascending and descending
@@ -100,7 +104,7 @@ start.bat
 This will:
 1. Open `start_proxy.bat` which prompts for your ri-team username (e.g., `john.d`)
 2. Windows will prompt for your domain password
-3. **Wait** for the proxy to show "Uvicorn running on http://0.0.0.0:8001"
+3. **Wait** for the proxy to show "Uvicorn running on http://127.0.0.1:8001"
 4. Press any key in the launcher to continue
 5. The API and Frontend will start automatically
 6. Open your browser to: **http://localhost:5173**
@@ -114,10 +118,9 @@ Navigate to the backend directory:
 cd Documents/azure-sql-dashboard/backend
 ```
 
-Edit the `.env` file and set your database name:
-```env
-SQL_DATABASE=YourActualDatabaseName
-```
+A `config.ini` file will be auto-created with default settings on first run. To configure the database connection, use the Settings menu in the dashboard after starting the services (see Step 4 below).
+
+> **Important:** Always change the database name through the Settings menu — not by editing `config.ini` directly. The SQL queries reference the database name internally; the Settings menu keeps everything in sync. Direct edits to `config.ini` will break all queries.
 
 Install Python dependencies:
 ```bash
@@ -135,7 +138,7 @@ You will be prompted for:
 1. Your ri-team username (format: `firstname.lastinitial`, e.g., `john.d`)
 2. Your domain password
 
-Wait for the message: `Uvicorn running on http://0.0.0.0:8001`
+Wait for the message: `Uvicorn running on http://127.0.0.1:8001`
 
 ### 3. Start Backend Server
 
@@ -182,12 +185,14 @@ The main tuning interface displays markdown percentages across all PPG Clusters:
 4. **Make Decisions**: Click "Leave", "Change", or "Reset" for each row
    - **Leave**: Keep current config (no changes)
    - **Change**: Modify the config value with selected operation
-   - **Reset**: Remove existing config from DefaultPercentage table (only available for rows with existing config)
+   - **Reset**: Remove existing config from DefaultPercentage table (only available for rows with at least one non-zero D column value)
 5. **Configure Changes**: For rows marked "Change", select Operation (Subtract/Add/Multiply/Divide/Override) and enter Value directly in the table
 6. **Focus View**: Use filter checkboxes to show/hide rows by decision type
 7. **Track Progress**: Watch the decision summary counts update in real-time
-8. **Execute Tuning**: Click "Tune Default Percentages" button to open the tuning modal
-9. **Review & Execute**: Review your selections in the modal (separate tables for Change and Reset rows) and click "Tune" to execute
+8. **Save Session**: Click "Save Session" to persist decisions to the database so they can be resumed later
+9. **Load Proposed Changes**: Click "Load Proposed Changes" to restore a previously saved session; if the database config has changed since you saved, a conflict resolution dialog appears
+10. **Execute Tuning**: Click "Tune Default Percentages" button to open the tuning modal
+11. **Review & Execute**: Review your selections in the modal (separate tables for Change and Reset rows) and click "Tune" to execute
 
 ### Tuning Actions
 
@@ -224,7 +229,7 @@ The Settings modal will pre-populate with current values even if the database co
 
 #### Query Editor — Save as Default
 
-When editing a query in the Query Editor tab, an **"Also save as default"** checkbox appears in the bottom-left corner (next to "Reset All to Defaults"). When checked:
+When editing a query in the Query Editor tab, an **"Also save as default"** checkbox appears right-aligned beneath the Save Query button. When checked:
 
 - The Save button turns green and reads **"Save as Default"**
 - Saving will update both the active query **and** the stored default
@@ -234,7 +239,7 @@ When editing a query in the Query Editor tab, an **"Also save as default"** chec
 
 The backend exposes these endpoints:
 
-- `GET /` - Health check (or serves frontend in packaged mode)
+- `GET /` - Serves frontend (packaged mode) or returns JSON status (dev mode)
 - `GET /api/health` - Detailed health with DB connectivity
 - `GET /api/config` - Get current database configuration
 - `POST /api/config` - Update database configuration
@@ -246,7 +251,12 @@ The backend exposes these endpoints:
 - `GET /api/queries` - Get saved queries
 - `PUT /api/queries/{id}` - Update a saved query
 - `PUT /api/queries/{id}/make-default` - Save a query as the new default
-- `POST /api/queries/reset` - Reset queries to defaults
+- `POST /api/queries/{id}/reset` - Reset a single query to its default
+- `POST /api/queries/reset` - Reset all queries to defaults
+- `POST /api/tuning-session/save` - Save current tuning session decisions to the database
+- `GET /api/tuning-session/conflicts/{max_version_id}/{active_version_id}` - Load proposed changes between two versions, with conflict detection for rows that differ between the saved session and the database
+- `DELETE /api/tuning-session/reset-all/{max_version_id}/{active_version_id}` - Reset all planned changes for the max version so it matches the active version; also clears saved session data
+- `POST /api/tuning-session/mark-submitted` - Mark specific PPG cluster rows as submitted after a tuning action executes
 
 Full API documentation available at `http://localhost:8000/docs`
 
@@ -270,7 +280,7 @@ The SQL Proxy includes built-in performance diagnostics. Watch the proxy console
 
 **Authentication:** Uses Windows domain credentials via `runas /netonly`. Username is entered at startup (not hardcoded).
 
-**SQL Injection Prevention:** All queries use parameterized statements.
+**SQL Injection Prevention:** SELECT and UPDATE query endpoints support parameterized statements. Internal session management endpoints (save/load/reset tuning session) use f-string SQL with Pydantic-validated integer types, providing type safety without traditional `?`-placeholder parameterization.
 
 **Query Protection:** Execute Query panel only allows SELECT statements; dangerous operations are blocked at the frontend.
 
@@ -320,7 +330,6 @@ Install [ODBC Driver 17 for SQL Server](https://learn.microsoft.com/en-us/sql/co
 ### "Query blocked" error
 - The Execute Query panel only allows SELECT queries
 - Use the Tuning Actions buttons for INSERT/UPDATE/DELETE operations
-- For testing queries, they will be written to the textbox (Tune Default Percentages)
 
 ### Settings form is empty
 - Open Settings and it will attempt to fetch current config from the API
@@ -338,7 +347,7 @@ azure-sql-dashboard/
 │   ├── main.py              # FastAPI application
 │   ├── db_proxy.py          # Database proxy client (talks to sql_proxy)
 │   ├── sql_proxy.py         # SQL Proxy Service (runs with domain creds)
-│   ├── config.py            # Configuration settings
+│   ├── config.py            # Legacy config (not imported by main.py; superseded by config.ini)
 │   ├── config.ini           # Database connection settings
 │   ├── queries.json         # Saved query definitions
 │   ├── requirements.txt     # Python dependencies
@@ -396,6 +405,7 @@ HEB-Waste-Dashboard/
 ├── sql_proxy.exe          ← Database authentication service
 ├── dashboard.exe          ← API + Frontend combined
 ├── static/                ← Web interface files
+├── queries.json           ← Built-in SQL queries for the Query Editor
 └── README.txt             ← Quick start for users
 ```
 
@@ -422,7 +432,7 @@ See `build/BUILD_README.md` for detailed build instructions.
 - FastAPI - Modern Python web framework
 - pyodbc - SQL Server connectivity
 - uvicorn - ASGI server
-- pydantic-settings - Configuration management
+- pydantic - Request/response model validation
 - requests - HTTP client for proxy communication
 - PyInstaller - Executable packaging
 
@@ -433,9 +443,15 @@ See `build/BUILD_README.md` for detailed build instructions.
 
 ## Recent Updates
 
+### Version 1.6 (March 2026)
+- **UI cleanup**: Browser tab and header title simplified to "Waste Tuning Dashboard"
+- **Center-aligned config tables**: Active Config Version and MAX Config Version table headers and values are now center-aligned; Execute Query results remain left-aligned
+- **Documentation fix**: Removed incorrect instructions to edit `config.ini` directly for database changes. All documentation now correctly directs users to the Settings menu, which keeps SQL query database references in sync via `update_queries_database()`
+
 ### Version 1.5 (March 2026)
 - **Save as Default**: Added "Also save as default" checkbox to the Query Editor in Settings. When checked, saving a query also updates the stored default so that "Reset This Query" restores to the new version.
 - **Query Editor layout improvement**: All four action buttons are now in a single uniform row; the "Also save as default" checkbox sits right-aligned beneath the Save button for a cleaner layout.
+- **Documentation updated**: README and TRAINING_GUIDE corrected to reflect the session management system (Load Proposed Changes, Save Session, Reset Unsaved Session Changes, Reset ALL Planned Changes), accurate API endpoint list, correct button colors, and accurate Save Query persistence behavior.
 
 ### Version 1.4 (March 2026)
 - **Performance monitoring**: SQL Proxy now logs timing for connections and queries

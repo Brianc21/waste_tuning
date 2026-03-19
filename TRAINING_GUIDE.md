@@ -3,8 +3,8 @@
 
 ---
 
-**Version:** 1.5  
-**Last Updated:** March 2026  
+**Version:** 1.6
+**Last Updated:** March 2026
 **Internal Use Only** - Retail Insight / HEB Waste Management Team
 
 ---
@@ -109,7 +109,7 @@ The dashboard requires **three services** to be running:
 4. Windows will prompt for your **domain password**
    - Enter your password
    - Press Enter
-5. **Wait** for the SQL Proxy window to show: `Uvicorn running on http://0.0.0.0:8001`
+5. **Wait** for the SQL Proxy window to show: `Uvicorn running on http://127.0.0.1:8001`
 6. Press any key in the launcher window to continue
 7. The API and Frontend will start automatically
 8. Open your browser to: **http://localhost:5173**
@@ -124,7 +124,7 @@ start_proxy.bat
 ```
 - Enter your ri-team username when prompted (e.g., `john.d`)
 - Enter your domain password when Windows prompts
-- Wait for: `Uvicorn running on http://0.0.0.0:8001`
+- Wait for: `Uvicorn running on http://127.0.0.1:8001`
 - Keep this window open
 
 **Step 2: Start the API Server**
@@ -181,7 +181,7 @@ The dashboard is divided into several key areas:
 
 ```
 ┌─────────────────────────────────────────────────────────┐
-│  HEADER: Retail Insight | HEB Waste Tuning Dashboard    │
+│  HEADER: Waste Tuning Dashboard                         │
 │  [Settings ⚙️]                                          │
 ├─────────────────────────────────────────────────────────┤
 │  ACTIVE CONFIG VERSION                                  │
@@ -192,7 +192,9 @@ The dashboard is divided into several key areas:
 │  • Filters & Checkboxes                                 │
 │  • Decision Summary: Leave | Change | Reset | Undecided │
 │  • Interactive Data Grid                                │
-│  • [Refresh Data] [Reset Planned Changes] buttons       │
+│  • [Refresh Data] [Load Proposed Changes]               │
+│  • [Save Session] [Reset Unsaved Session Changes]       │
+│  • [Reset ALL Planned Changes]                          │
 ├─────────────────────────────────────────────────────────┤
 │  TUNING ACTIONS                                         │
 │  [Clone Config] [Tune Default %] [Activate Config]      │
@@ -305,7 +307,7 @@ For each row, click one of three buttons:
 | **Change** | Modify the value | Enables Operation & Value fields |
 | **Reset** | Remove existing config | Deletes from DefaultPercentage table |
 
-**Note:** The Reset button is only enabled for rows that have existing configuration values.
+**Note:** The Reset button is only enabled for rows that have at least one non-zero D column value. This is used as a proxy for rows that have active markdown data worth resetting. Rows where all D columns are zero or null will have Reset disabled.
 
 ## 4.5 Step 4: Configure Changes
 
@@ -334,6 +336,30 @@ For rows marked as **"Change"**:
 5. Click **"Tune"** to execute
 
 **⚠️ Warning:** If tuning the active version, you'll see a confirmation dialog. It's recommended to tune a cloned version instead.
+
+## 4.7 Session Management
+
+Your tuning decisions can be saved and resumed across browser sessions using the buttons below the table.
+
+| Button | What It Does |
+|--------|--------------|
+| **Refresh Data** | Reloads the markdown data from the database |
+| **Load Proposed Changes** | Fetches your previously saved decisions from the database. If any rows differ between your saved session and the current database config, a conflict resolution dialog appears so you can choose which values to keep row-by-row |
+| **Save Session** | Saves all current decisions (Leave/Change/Reset, operation, and value) to the database for the max config version |
+| **Reset Unsaved Session Changes** | Discards any decisions you have made since your last save and reverts to the last saved session state |
+| **Reset ALL Planned Changes** | Permanently deletes all saved session data for the max version **and** resets its config entries to match the active version. Requires confirmation. Cannot be undone |
+
+**When is Load Proposed Changes available?**
+
+The Load Proposed Changes button is only meaningful when the Max Version differs from the Active Version. If they are the same, the button will alert you that there are no proposed changes to load.
+
+**Conflict Resolution**
+
+If your saved session decisions conflict with what is currently in the database (for example, the database config was updated by someone else since you last saved), a conflict dialog appears. For each conflicting row you must choose:
+- **Use Previous Session Data** — keep your saved decision
+- **Use Database Data** — use the current database state instead
+
+You can apply the same choice to all rows at once, or resolve them one at a time. The **Confirm** button is disabled until all rows are resolved.
 
 ---
 
@@ -445,14 +471,14 @@ View and modify the built-in SQL queries used by the dashboard.
 | **Reset All to Defaults** | Restores every query to its original built-in version |
 | **Reset This Query** | Restores only the selected query to its default |
 | **Close** | Closes the Settings modal without saving |
-| **Save Query** | Saves your changes for this session |
+| **Save Query** | Saves your changes to disk (persists across dashboard restarts) |
 
 ### Saving a Query as the New Default
 
 When you want your edited query to become the permanent default (so "Reset This Query" restores to your version instead of the original):
 
 1. Make your edits to the SQL
-2. Check the **"Also save as default"** checkbox in the bottom-left corner
+2. Check the **"Also save as default"** checkbox (right-aligned beneath the Save Query button)
 3. The Save button will turn green and read **"Save as Default"**
 4. Click **"Save as Default"**
 
@@ -472,7 +498,7 @@ The checkbox is only enabled when there are unsaved changes. It clears automatic
 ## 8.2 During Tuning
 
 ✅ **Work in batches** - Don't try to tune everything at once  
-✅ **Use "Show Only Change"** - Focus on what you're modifying  
+✅ **Use "Show Only 'Change' rows"** - Focus on what you're modifying
 ✅ **Double-check Reset rows** - These delete existing configs  
 
 ## 8.3 After Tuning
@@ -575,7 +601,7 @@ The checkbox is only enabled when there are unsaved changes. It clears automatic
 1. The Settings modal will attempt to fetch config from the API
 2. If successful, fields will populate automatically
 3. If the API is unreachable, enter the values manually
-4. Check `config.ini` in the backend folder for current values
+4. Enter the connection values manually in the Settings form — do not edit `config.ini` directly, as doing so bypasses the query database-name update and will break all SQL queries
 
 ## 9.9 Services Won't Start
 
@@ -655,8 +681,10 @@ If you encounter issues not covered here:
 | Button | Inactive | Active |
 |--------|----------|--------|
 | Leave | Gray | Green |
-| Change | Gray | Yellow |
+| Change | Gray | Red |
 | Reset | Gray (disabled) | Dark Gray |
+
+Note: When a row is marked Change, the entire Action cell background turns yellow. The Change button itself turns red.
 
 ## Operation Types
 
@@ -672,7 +700,7 @@ If you encounter issues not covered here:
 
 | Action | How |
 |--------|-----|
-| Save for this session only | Edit SQL → click **Save Query** |
+| Save query (persists across restarts) | Edit SQL → click **Save Query** |
 | Save as new permanent default | Edit SQL → check **"Also save as default"** → click **Save as Default** |
 | Restore this query to default | Click **Reset This Query** |
 | Restore all queries to defaults | Click **Reset All to Defaults** |

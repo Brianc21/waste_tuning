@@ -433,13 +433,14 @@ function App() {
   }
   const handleActivateSuccess = () => { loadConfigVersions() }
 
-  const renderTable = (data) => {
+  const renderTable = (data, centered = false) => {
     if (!data || data.length === 0) return <div className="loading">No results returned.</div>
     const columns = Object.keys(data[0])
+    const cellAlign = centered ? { textAlign: 'center' } : {}
     return (
       <table>
-        <thead><tr>{columns.map((col) => <th key={col}>{col}</th>)}</tr></thead>
-        <tbody>{data.map((row, idx) => (<tr key={idx}>{columns.map((col) => <td key={col}>{row[col] !== null ? String(row[col]) : 'NULL'}</td>)}</tr>))}</tbody>
+        <thead><tr>{columns.map((col) => <th key={col} style={cellAlign}>{col}</th>)}</tr></thead>
+        <tbody>{data.map((row, idx) => (<tr key={idx}>{columns.map((col) => <td key={col} style={cellAlign}>{row[col] !== null ? String(row[col]) : 'NULL'}</td>)}</tr>))}</tbody>
       </table>
     )
   }
@@ -459,7 +460,7 @@ function App() {
   return (
     <div className="app">
       <div className="header" style={{ position: 'relative' }}>
-        <h1>Retail Insight | HEB Waste Tuning Dashboard</h1>
+        <h1>Waste Tuning Dashboard</h1>
         <p>Connected to: hebwmddev-sqlvm.ri-team.net</p>
         <button onClick={() => setShowSettingsModal(true)} style={{ position: 'absolute', top: '10px', right: '10px', width: 'auto', background: '#6c757d', color: 'white', border: 'none', padding: '6px 10px', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', fontWeight: 'normal', transform: 'none', boxShadow: 'none' }}>
           ⚙️ Settings
@@ -478,14 +479,14 @@ function App() {
         <h2>Active Config Version</h2>
         {activeConfigLoading && <div className="loading">Loading active config version...</div>}
         {activeConfigError && <div className="error-message">{activeConfigError}</div>}
-        {activeConfigVersion && <div className="results">{renderTable(activeConfigVersion)}</div>}
+        {activeConfigVersion && <div className="results">{renderTable(activeConfigVersion, true)}</div>}
         {isMaxVersionActive() && <p style={{ marginTop: '12px', color: '#155724', fontSize: '0.9rem', fontStyle: 'italic' }}>Max Config Version is Active</p>}
         {shouldShowMaxVersion() && (
           <>
             <h2 style={{ marginTop: '24px' }}>MAX Config Version (Not Active)</h2>
             {maxConfigLoading && <div className="loading">Loading max config version...</div>}
             {maxConfigError && <div className="error-message">{maxConfigError}</div>}
-            {maxConfigVersion && <div className="results">{renderTable(maxConfigVersion)}</div>}
+            {maxConfigVersion && <div className="results">{renderTable(maxConfigVersion, true)}</div>}
           </>
         )}
       </div>
