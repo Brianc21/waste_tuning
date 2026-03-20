@@ -1,4 +1,4 @@
-# HEB Waste Tuning Dashboard
+# Waste Tuning Dashboard
 ## Training Guide
 
 ---
@@ -25,7 +25,7 @@
 
 # 1. Introduction
 
-The **HEB Waste Tuning Dashboard** is a web-based tool designed to streamline the process of managing and tuning waste markdown configurations. It provides:
+The **Waste Tuning Dashboard** is a web-based tool designed to streamline the process of managing and tuning waste markdown configurations. It provides:
 
 - **Real-time visibility** into current markdown percentages across all PPG Clusters
 - **Interactive tuning** with Leave/Change/Reset decisions per row
@@ -53,7 +53,7 @@ Before using the dashboard, ensure you have:
 
 ### For Packaged Version (Recommended for End Users)
 - ✅ Just extract the zip file - no additional software needed!
-- ✅ ODBC Driver 17 for SQL Server (usually pre-installed on Windows)
+- ✅ ODBC Driver 17 or 18 for SQL Server (auto-detected; Driver 18 included with SSMS 21, Driver 17 available separately)
 
 ### For Development Version
 - ✅ Node.js installed (for the frontend)
@@ -225,9 +225,14 @@ The main data grid showing all PPG Clusters and their markdown configurations:
 
 | Column Type | Description |
 |-------------|-------------|
-| **Hierarchy Columns** (Frozen) | Level 4, 3, 2, 1 names - always visible |
-| **PPGClusterID** | Unique identifier for each cluster |
-| **D Columns** (Color-coded) | Markdown values by Days-to-Expiry |
+| **Hierarchy Columns** (Frozen) | Level 4, 3, 2, 1 names and PPGClusterID - always visible |
+| **Default Scalar** | The baseline scalar value |
+| **Generated Scalar** | The system-generated scalar value |
+| **Configured Scalar** | The current configured scalar value |
+| **Configured Value** | The config value currently applied |
+| **Configured Type** | The operation type for the current config |
+| **DTE1 Scalar** | Days-to-Expiry 1 scalar value |
+| **D Columns** (Color-coded) | Markdown values by Days-to-Expiry group |
 | **Action Column** | Leave/Change/Reset buttons |
 | **Operation Column** | Subtract/Add/Multiply/Divide/Override |
 | **Value Column** | The config value to apply |
@@ -608,7 +613,7 @@ The checkbox is only enabled when there are unsaved changes. It clears automatic
 **Symptom:** Error when running start scripts
 
 *Packaged Version:*
-1. **"ODBC Driver not found"**: Install ODBC Driver 17 for SQL Server from Microsoft
+1. **"ODBC Driver not found"**: Install ODBC Driver 17 or 18 for SQL Server from Microsoft (Driver 18 is included with SSMS 21)
 2. **Antivirus blocking**: Some antivirus may block .exe files - add an exception
 3. **Port in use**: Another application may be using port 8000 or 8001
 
@@ -737,5 +742,5 @@ Watch the SQL Proxy console for timing:
 
 *End of Training Guide*
 
-**Document Version:** 1.5  
+**Document Version:** 1.6
 **For questions or updates, contact the Retail Insight team.**

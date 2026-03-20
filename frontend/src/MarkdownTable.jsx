@@ -58,7 +58,12 @@ const COLUMN_DISPLAY_NAMES = {
   'HierarchyLevel2Name': ['Hierarchy', 'Level 2'],
   'HierarchyLevel1Name': ['Hierarchy', 'Level 1'],
   'PPGClusterID': ['PPG', 'ClusterID'],
-  'ConfigOperationType': ['Configuration', 'Type'],
+  'DefaultScalar': ['Default', 'Scalar'],
+  'GeneratedScalar': ['Generated', 'Scalar'],
+  'ConfiguredScalar': ['Configured', 'Scalar'],
+  'ConfigValue': ['Configured', 'Value'],
+  'ConfigOperationType': ['Configured', 'Type'],
+  'DTE1_Scalar': ['DTE1', 'Scalar'],
 }
 
 const renderHeader = (colName) => {
@@ -646,7 +651,59 @@ const MarkdownTable = forwardRef(function MarkdownTable({ data, loading, error, 
   const frozenColumns = regularColumns.slice(0, FROZEN_COLUMN_COUNT)
   const scrollableRegularColumns = regularColumns.slice(FROZEN_COLUMN_COUNT)
   const allScrollableColumns = [...scrollableRegularColumns, ...dColumns]
-  const scrollableTableWidth = allScrollableColumns.length * SCROLLABLE_COL_WIDTH + ACTION_COL_WIDTH + OPERATION_COL_WIDTH + VALUE_COL_WIDTH
+
+  // Auto-fit frozen column widths to the longest value in each column
+  const computedFrozenWidths = useMemo(() => {
+    const CHAR_PX = 7       // approximate px per character at font-size 12px
+    const CELL_PADDING = 4  // 2px each side
+    const MIN_WIDTH = 60
+    // Longest line of the two-line header for each frozen column
+    const headerMaxChars = {
+      'HierarchyLevel4Name': 9, // "Hierarchy"
+      'HierarchyLevel3Name': 9,
+      'HierarchyLevel2Name': 9,
+      'HierarchyLevel1Name': 9,
+      'PPGClusterID': 9,        // "ClusterID"
+    }
+    return regularColumns.slice(0, FROZEN_COLUMN_COUNT).map(col => {
+      const headerLen = headerMaxChars[col] ?? col.length
+      const maxDataLen = data
+        ? data.reduce((max, row) => {
+            const val = row[col] !== null && row[col] !== undefined ? String(row[col]) : ''
+            return Math.max(max, val.length)
+          }, 0)
+        : 0
+      return Math.max(MIN_WIDTH, Math.max(maxDataLen, headerLen) * CHAR_PX + CELL_PADDING)
+    })
+  }, [data, regularColumns])
+
+  const totalFrozenWidth = computedFrozenWidths.reduce((a, b) => a + b, 0)
+
+  // Auto-fit scrollable regular column widths to the longest value in each column
+  const computedScrollableColWidths = useMemo(() => {
+    const CHAR_PX = 7
+    const CELL_PADDING = 4
+    const MIN_WIDTH = 60
+    const widthMap = {}
+    for (const col of regularColumns.slice(FROZEN_COLUMN_COUNT)) {
+      const displayName = COLUMN_DISPLAY_NAMES[col]
+      const headerLen = displayName
+        ? Math.max(...displayName.map(s => s.length))
+        : col.length
+      const maxDataLen = data
+        ? data.reduce((max, row) => {
+            const val = row[col] !== null && row[col] !== undefined ? String(row[col]) : ''
+            return Math.max(max, val.length)
+          }, 0)
+        : 0
+      widthMap[col] = Math.max(MIN_WIDTH, Math.max(maxDataLen, headerLen) * CHAR_PX + CELL_PADDING)
+    }
+    return widthMap
+  }, [data, regularColumns])
+
+  const getScrollableColWidth = (col) => computedScrollableColWidths[col] ?? SCROLLABLE_COL_WIDTH
+
+  const scrollableTableWidth = scrollableRegularColumns.reduce((sum, col) => sum + getScrollableColWidth(col), 0) + dColumns.length * SCROLLABLE_COL_WIDTH + ACTION_COL_WIDTH + OPERATION_COL_WIDTH + VALUE_COL_WIDTH
 
   const clearFilters = () => { setFilterHierarchy4(''); setFilterHierarchy3(''); setFilterHierarchy2(''); setFilterHierarchy1(''); setFilterPPGCluster('') }
   const clearSort = () => { setSortColumn(null); setSortDirection('asc') }
@@ -655,8 +712,8 @@ const MarkdownTable = forwardRef(function MarkdownTable({ data, loading, error, 
   if (error) return <div className="error-message">{error}</div>
   if (!data || data.length === 0) return <div className="loading">No markdown data available.</div>
 
-  const cellStyle = { padding: '6px 10px', borderBottom: '1px solid #e0e0e0', textAlign: 'center', fontSize: '12px', whiteSpace: 'nowrap', width: SCROLLABLE_COL_WIDTH, minWidth: SCROLLABLE_COL_WIDTH, maxWidth: SCROLLABLE_COL_WIDTH, boxSizing: 'border-box', overflow: 'hidden' }
-  const headerCellStyle = { padding: '6px 10px', borderBottom: '2px solid #3a5ecc', fontSize: '12px', whiteSpace: 'normal', textAlign: 'center', verticalAlign: 'middle', background: '#4C7EFF', color: 'white', fontWeight: 'bold', width: SCROLLABLE_COL_WIDTH, minWidth: SCROLLABLE_COL_WIDTH, maxWidth: SCROLLABLE_COL_WIDTH, boxSizing: 'border-box', lineHeight: '1.3', cursor: 'pointer', userSelect: 'none' }
+  const cellStyle = { padding: '6px 2px', borderBottom: '1px solid #e0e0e0', textAlign: 'center', fontSize: '12px', whiteSpace: 'nowrap', width: SCROLLABLE_COL_WIDTH, minWidth: SCROLLABLE_COL_WIDTH, maxWidth: SCROLLABLE_COL_WIDTH, boxSizing: 'border-box', overflow: 'hidden' }
+  const headerCellStyle = { padding: '6px 2px', borderBottom: '2px solid #3a5ecc', fontSize: '12px', whiteSpace: 'normal', textAlign: 'center', verticalAlign: 'middle', background: '#4C7EFF', color: 'white', fontWeight: 'bold', width: SCROLLABLE_COL_WIDTH, minWidth: SCROLLABLE_COL_WIDTH, maxWidth: SCROLLABLE_COL_WIDTH, boxSizing: 'border-box', lineHeight: '1.3', cursor: 'pointer', userSelect: 'none' }
   const actionCellStyle = { padding: '6px 6px 4px 25px', borderBottom: '1px solid #e0e0e0', textAlign: 'center', fontSize: '12px', whiteSpace: 'nowrap', width: ACTION_COL_WIDTH, minWidth: ACTION_COL_WIDTH, maxWidth: ACTION_COL_WIDTH, boxSizing: 'border-box', overflow: 'hidden', position: 'relative' }
   const actionHeaderStyle = { padding: '6px 5px 6px 20px', borderBottom: '2px solid #3a5ecc', whiteSpace: 'normal', textAlign: 'center', verticalAlign: 'middle', background: '#4C7EFF', color: 'white', fontWeight: 'bold', width: ACTION_COL_WIDTH, minWidth: ACTION_COL_WIDTH, maxWidth: ACTION_COL_WIDTH, boxSizing: 'border-box', lineHeight: '1.3' }
   const hasChangeRows = decisionCounts.change > 0
@@ -727,12 +784,12 @@ const MarkdownTable = forwardRef(function MarkdownTable({ data, loading, error, 
 
       <p style={{ marginBottom: '12px', color: '#666' }}>Showing <strong>{sortedData.length}</strong> of <strong>{data.length}</strong> rows</p>
 
-      <div style={{ display: 'grid', gridTemplateColumns: `${TOTAL_FROZEN_WIDTH}px 1fr`, gridTemplateRows: 'auto 1fr', border: '1px solid #ddd', borderRadius: '4px', overflow: 'hidden', maxHeight: '420px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: `${totalFrozenWidth}px 1fr`, gridTemplateRows: 'auto 1fr', border: '1px solid #ddd', borderRadius: '4px', overflow: 'hidden', maxHeight: '420px' }}>
         <div style={{ background: '#4C7EFF', borderRight: '2px solid #3a5ecc', borderBottom: '2px solid #3a5ecc', overflow: 'hidden' }}>
-          <table style={{ borderCollapse: 'collapse', tableLayout: 'fixed', width: TOTAL_FROZEN_WIDTH }}>
+          <table style={{ borderCollapse: 'collapse', tableLayout: 'fixed', width: totalFrozenWidth }}>
             <thead><tr>
               {frozenColumns.map((col, idx) => (
-                <th key={col} onClick={() => handleSort(col)} style={{ ...headerCellStyle, width: FROZEN_COL_WIDTHS[idx], minWidth: FROZEN_COL_WIDTHS[idx], maxWidth: FROZEN_COL_WIDTHS[idx], background: sortColumn === col ? '#3a5ecc' : '#4C7EFF' }}>
+                <th key={col} onClick={() => handleSort(col)} style={{ ...headerCellStyle, width: computedFrozenWidths[idx], minWidth: computedFrozenWidths[idx], maxWidth: computedFrozenWidths[idx], background: sortColumn === col ? '#3a5ecc' : '#4C7EFF' }}>
                   {renderHeader(col)}<SortIndicator column={col} sortColumn={sortColumn} sortDirection={sortDirection} />
                 </th>
               ))}
@@ -747,7 +804,7 @@ const MarkdownTable = forwardRef(function MarkdownTable({ data, loading, error, 
                 const textColor = getColumnColor(col, true) ? '#333' : 'white'
                 const isActive = sortColumn === col
                 return (
-                  <th key={col} onClick={() => handleSort(col)} style={{ ...headerCellStyle, background: isActive ? (getColumnColor(col, true) ? '#888' : '#3a5ecc') : bgColor, color: textColor }}>
+                  <th key={col} onClick={() => handleSort(col)} style={{ ...headerCellStyle, width: getScrollableColWidth(col), minWidth: getScrollableColWidth(col), maxWidth: getScrollableColWidth(col), background: isActive ? (getColumnColor(col, true) ? '#888' : '#3a5ecc') : bgColor, color: textColor }}>
                     {renderHeader(col)}<SortIndicator column={col} sortColumn={sortColumn} sortDirection={sortDirection} />
                   </th>
                 )
@@ -759,12 +816,12 @@ const MarkdownTable = forwardRef(function MarkdownTable({ data, loading, error, 
           </table>
         </div>
         <div ref={frozenBodyRef} onScroll={handleFrozenBodyScroll} style={{ overflowY: 'auto', overflowX: 'hidden', borderRight: '2px solid #ccc', maxHeight: '380px' }}>
-          <table style={{ borderCollapse: 'collapse', tableLayout: 'fixed', width: TOTAL_FROZEN_WIDTH }}>
+          <table style={{ borderCollapse: 'collapse', tableLayout: 'fixed', width: totalFrozenWidth }}>
             <tbody>
               {sortedData.map((row, rowIdx) => (
                 <tr key={rowIdx} style={{ background: rowIdx % 2 === 0 ? '#fff' : '#f8f9fa' }}>
                   {frozenColumns.map((col, colIdx) => (
-                    <td key={col} style={{ ...cellStyle, width: FROZEN_COL_WIDTHS[colIdx], minWidth: FROZEN_COL_WIDTHS[colIdx], maxWidth: FROZEN_COL_WIDTHS[colIdx], background: 'inherit' }}>
+                    <td key={col} style={{ ...cellStyle, width: computedFrozenWidths[colIdx], minWidth: computedFrozenWidths[colIdx], maxWidth: computedFrozenWidths[colIdx], background: 'inherit' }}>
                       {row[col] !== null && row[col] !== undefined ? String(row[col]) : 'NULL'}
                     </td>
                   ))}
@@ -789,7 +846,7 @@ const MarkdownTable = forwardRef(function MarkdownTable({ data, loading, error, 
                       const displayValue = value !== null && value !== undefined
                         ? ((isDColumn(col) || col === 'DTE1_Scalar') ? Math.round(typeof value === 'number' ? value : parseFloat(value)) : String(value))
                         : 'NULL'
-                      return <td key={col} style={{ ...cellStyle, background: bgColor || 'inherit' }}>{displayValue}</td>
+                      return <td key={col} style={{ ...cellStyle, width: getScrollableColWidth(col), minWidth: getScrollableColWidth(col), maxWidth: getScrollableColWidth(col), background: bgColor || 'inherit' }}>{displayValue}</td>
                     })}
                     <td style={{ ...actionCellStyle, background: currentDecision === 'Leave' ? '#d4edda' : currentDecision === 'Change' ? '#fff3cd' : currentDecision === 'Reset' ? '#f8d7da' : 'inherit' }}>
                       <div style={{ display: 'flex', gap: '2px', justifyContent: 'center', width: '100%', overflow: 'hidden' }}>

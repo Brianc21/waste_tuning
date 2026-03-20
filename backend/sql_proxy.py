@@ -63,9 +63,32 @@ SQL_SERVER = CONFIG['server']
 SQL_DATABASE = CONFIG['database']
 SQL_PORT = CONFIG['port']
 
+def get_odbc_driver():
+    """Auto-detect the best available ODBC driver for SQL Server."""
+    preferred = [
+        "ODBC Driver 18 for SQL Server",
+        "ODBC Driver 17 for SQL Server",
+        "ODBC Driver 13 for SQL Server",
+    ]
+    available = [d for d in pyodbc.drivers() if "SQL Server" in d]
+    for driver in preferred:
+        if driver in available:
+            print(f"[INFO] Using ODBC driver: {driver}")
+            return driver
+    # Fall back to whatever SQL Server driver is available
+    if available:
+        print(f"[INFO] Using ODBC driver (fallback): {available[0]}")
+        return available[0]
+    raise RuntimeError(
+        f"No ODBC driver for SQL Server found. Install 'ODBC Driver 17 for SQL Server' or later. "
+        f"Installed drivers: {pyodbc.drivers()}"
+    )
+
+ODBC_DRIVER = get_odbc_driver()
+
 # Connection string using Windows Authentication
 CONNECTION_STRING = (
-    f"DRIVER={{ODBC Driver 17 for SQL Server}};"
+    f"DRIVER={{{ODBC_DRIVER}}};"
     f"SERVER={SQL_SERVER},{SQL_PORT};"
     f"DATABASE={SQL_DATABASE};"
     f"Encrypt=yes;"

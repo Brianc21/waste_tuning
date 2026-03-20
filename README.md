@@ -1,6 +1,6 @@
-# Azure SQL Dashboard (HEB Waste Tuning)
+# Waste Tuning Dashboard
 
-A full-stack dashboard for interacting with Azure SQL Server, specifically designed for the HEB Waste Management tuning workflow. Supports Windows Integrated Authentication via a proxy service.
+A full-stack dashboard for managing and tuning HEB waste markdown configurations via Azure SQL Server. Supports Windows Integrated Authentication via a proxy service.
 
 ## Architecture
 
@@ -77,20 +77,20 @@ Azure SQL Server (hebwmddev-sqlvm.ri-team.net)
   - D columns default to descending (highest values first)
   - Visual indicators on sorted column
   - "Clear Sort" button to reset
-- D column and DTE1_Scalar values rounded to whole numbers
+- D column and DTE1 Scalar values rounded to whole numbers
 
 ## Prerequisites
 
 ### For Development
 - Python 3.8 or higher
 - Node.js 16 or higher
-- ODBC Driver 17 for SQL Server ([Download here](https://learn.microsoft.com/en-us/sql/connect/odbc/download-odbc-driver-for-sql-server))
+- ODBC Driver 17 or 18 for SQL Server ([Download here](https://learn.microsoft.com/en-us/sql/connect/odbc/download-odbc-driver-for-sql-server))
 - Windows domain account (ri-team) with database access
 - VPN connection to HEB network (if working remotely)
 
 ### For End Users (Packaged Version)
 - Windows 10/11
-- ODBC Driver 17 for SQL Server
+- ODBC Driver 17 or 18 for SQL Server (Driver 18 is included with SSMS 21; Driver 17 available separately if needed)
 - VPN connection to HEB network
 - ri-team domain account
 
@@ -446,7 +446,11 @@ See `build/BUILD_README.md` for detailed build instructions.
 ### Version 1.6 (March 2026)
 - **UI cleanup**: Browser tab and header title simplified to "Waste Tuning Dashboard"
 - **Center-aligned config tables**: Active Config Version and MAX Config Version table headers and values are now center-aligned; Execute Query results remain left-aligned
+- **Auto-fit column widths**: All frozen columns (hierarchy levels, PPGClusterID) and scrollable regular columns (Default Scalar, Generated Scalar, Configured Scalar, Configured Value, Configured Type, DTE1 Scalar) now size themselves to fit the longest value in the data rather than using fixed widths
+- **Column header display names**: Scrollable regular columns now show properly formatted two-line headers (e.g., "Default / Scalar", "Configured / Value", "Configured / Type") instead of raw database field names
 - **Documentation fix**: Removed incorrect instructions to edit `config.ini` directly for database changes. All documentation now correctly directs users to the Settings menu, which keeps SQL query database references in sync via `update_queries_database()`
+- **Launcher fix**: Fixed `Start Dashboard.bat` not showing the SQL Proxy console window after credentials are entered. The launcher now uses `cmd /k` to ensure a visible, persistent window is created regardless of Windows configuration
+- **ODBC driver auto-detection**: The SQL Proxy now automatically selects the best available ODBC driver (18, 17, 13 in preference order) rather than requiring Driver 17 specifically. Users with SSMS 21 and Driver 18 no longer need a separate installation
 
 ### Version 1.5 (March 2026)
 - **Save as Default**: Added "Also save as default" checkbox to the Query Editor in Settings. When checked, saving a query also updates the stored default so that "Reset This Query" restores to the new version.
