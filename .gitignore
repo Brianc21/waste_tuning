@@ -9,8 +9,11 @@ venv/
 ENV/
 .venv
 *.egg-info/
+
+# Build output (generated files - not source)
 dist/
-build/
+build/build/
+build/dist/
 
 # Environment variables
 .env
