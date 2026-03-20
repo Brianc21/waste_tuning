@@ -367,8 +367,6 @@ azure-sql-dashboard/
 │   └── package.json
 ├── build/                   # Build scripts for distribution
 │   ├── build_all.bat        # Main build script
-│   ├── sql_proxy.spec       # PyInstaller config for SQL Proxy
-│   ├── dashboard.spec       # PyInstaller config for Dashboard
 │   └── launcher_template.bat # Template for user launcher
 ├── dist/                    # Distribution output folder
 ├── setup.bat                # One-click dependency setup
@@ -382,18 +380,18 @@ azure-sql-dashboard/
 
 ## Building for Distribution
 
-The dashboard can be packaged into standalone executables that end users can run without installing Python or Node.js.
+The dashboard is distributed as a self-contained folder with a bundled Python runtime — no installation required on end-user machines.
 
 ### Build Requirements (on build machine only)
-- Python 3.8+ with pip
+- Python 3.9+ with pip (64-bit)
 - Node.js 16+ with npm
-- PyInstaller (`pip install pyinstaller`)
+- Internet connection (downloads Python embeddable package during build)
 
 ### Building
 
 1. Navigate to the `build` folder
 2. Run `build_all.bat`
-3. Wait for the build to complete (5-10 minutes)
+3. Wait for the build to complete (2-4 minutes)
 4. Distribution package will be in `dist/HEB-Waste-Dashboard/`
 
 ### Distribution Package
@@ -402,27 +400,36 @@ The build creates a folder containing:
 ```
 HEB-Waste-Dashboard/
 ├── Start Dashboard.bat    ← Users double-click this
-├── sql_proxy.exe          ← Database authentication service
-├── dashboard.exe          ← API + Frontend combined
+├── run_proxy.bat          ← Launches SQL Proxy (called by launcher)
+├── run_dashboard.bat      ← Launches Dashboard (called by launcher)
+├── python/                ← Bundled Python runtime (no install needed)
+├── sql_proxy.py           ← Database authentication service
+├── main.py                ← API + Frontend server
+├── db_proxy.py            ← Database proxy client
 ├── static/                ← Web interface files
 ├── queries.json           ← Built-in SQL queries for the Query Editor
 └── README.txt             ← Quick start for users
 ```
 
+Note: `config.ini` is NOT included — it is auto-created with default settings on first run.
+
 ### End User Requirements
 - Windows 10/11
-- ODBC Driver 17 for SQL Server (usually pre-installed)
+- ODBC Driver 17 or 18 for SQL Server (Driver 18 included with SSMS 21)
 - VPN connection to HEB network
 - ri-team domain account
 
 ### End User Experience
 
 1. Extract the zip file
-2. Double-click "Start Dashboard.bat"
-3. Enter ri-team username (e.g., `john.d`)
-4. Enter domain password
-5. Wait for proxy to start, press any key
-6. Browser opens to `http://localhost:8000`
+2. Copy the folder to a local drive (e.g. `C:\Apps\WasteDashboard\`) — do not run from OneDrive
+3. Double-click "Start Dashboard.bat"
+4. Enter ri-team username (e.g., `john.d`)
+5. Enter domain password
+6. Wait for proxy to start, press any key
+7. Browser opens to `http://localhost:8000`
+
+No certificate setup or one-time steps required.
 
 See `build/BUILD_README.md` for detailed build instructions.
 
@@ -434,7 +441,7 @@ See `build/BUILD_README.md` for detailed build instructions.
 - uvicorn - ASGI server
 - pydantic - Request/response model validation
 - requests - HTTP client for proxy communication
-- PyInstaller - Executable packaging
+- Python Embeddable Package - Self-contained runtime distribution
 
 **Frontend:**
 - React 18 - UI library
@@ -443,13 +450,19 @@ See `build/BUILD_README.md` for detailed build instructions.
 
 ## Recent Updates
 
+### Version 1.7 (March 2026)
+- **Deployment overhaul**: Replaced PyInstaller EXE packaging with a bundled Python embeddable runtime. The distribution now ships `.py` scripts alongside a self-contained `python/` folder rather than compiled executables. This eliminates Windows Defender / antivirus false positives that were blocking `sql_proxy.exe` on some machines.
+- **No certificate setup**: The one-time `Import-Certificate` PowerShell step is no longer needed. Users simply extract and run.
+- **Faster builds**: Build time reduced from ~5-10 minutes to ~2-4 minutes (no PyInstaller compilation step).
+- **Build requirement change**: PyInstaller is no longer needed on the build machine. An internet connection is required during build to download the Python embeddable package from python.org.
+
 ### Version 1.6 (March 2026)
 - **UI cleanup**: Browser tab and header title simplified to "Waste Tuning Dashboard"
 - **Center-aligned config tables**: Active Config Version and MAX Config Version table headers and values are now center-aligned; Execute Query results remain left-aligned
 - **Auto-fit column widths**: All frozen columns (hierarchy levels, PPGClusterID) and scrollable regular columns (Default Scalar, Generated Scalar, Configured Scalar, Configured Value, Configured Type, DTE1 Scalar) now size themselves to fit the longest value in the data rather than using fixed widths
 - **Column header display names**: Scrollable regular columns now show properly formatted two-line headers (e.g., "Default / Scalar", "Configured / Value", "Configured / Type") instead of raw database field names
 - **Documentation fix**: Removed incorrect instructions to edit `config.ini` directly for database changes. All documentation now correctly directs users to the Settings menu, which keeps SQL query database references in sync via `update_queries_database()`
-- **Launcher fix**: Fixed `Start Dashboard.bat` not showing the SQL Proxy console window after credentials are entered. The launcher now uses `cmd /k` to ensure a visible, persistent window is created regardless of Windows configuration
+- **Deployment note**: `sql_proxy.exe` must be run from a local drive (not OneDrive). Microsoft Defender ASR treats cloud-synced executables with extra suspicion. If ASR blocks the proxy, IT will need to add an exclusion for `sql_proxy.exe` (ASR Rule GUID: `01443614-cd74-433a-b99e-2ecdc07bfc25`)
 - **ODBC driver auto-detection**: The SQL Proxy now automatically selects the best available ODBC driver (18, 17, 13 in preference order) rather than requiring Driver 17 specifically. Users with SSMS 21 and Driver 18 no longer need a separate installation
 
 ### Version 1.5 (March 2026)

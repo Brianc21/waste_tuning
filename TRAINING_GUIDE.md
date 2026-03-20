@@ -3,7 +3,7 @@
 
 ---
 
-**Version:** 1.6
+**Version:** 1.7
 **Last Updated:** March 2026
 **Internal Use Only** - Retail Insight / HEB Waste Management Team
 
@@ -76,16 +76,15 @@ You will need your **ri-team** domain username and password to connect.
 
 If you received the dashboard as a zip file (HEB-Waste-Dashboard.zip):
 
-1. **Extract the zip file** to any folder
-2. Open the `HEB-Waste-Dashboard` folder
-3. **Double-click `Start Dashboard.bat`**
-4. Enter your **ri-team username** (e.g., `john.d`)
-5. Windows will prompt for your **domain password** - enter it
-6. **Wait** for the SQL Proxy window to show: `Uvicorn running on http://127.0.0.1:8001`
-7. Press any key in the launcher to continue
-8. Your browser will automatically open to: **http://localhost:8000**
+1. Extract the zip and copy the `HEB-Waste-Dashboard` folder to a **local drive** (e.g. `C:\Apps\WasteDashboard\`) — do not run from OneDrive or a network share
+2. **Double-click `Start Dashboard.bat`**
+3. Enter your **ri-team username** (e.g., `john.d`)
+4. Windows will prompt for your **domain password** - enter it
+5. **Wait** for the SQL Proxy window to show: `Uvicorn running on http://127.0.0.1:8001`
+6. Press any key in the launcher to continue
+7. Your browser will automatically open to: **http://localhost:8000**
 
-**That's it!** No Python or Node.js installation required.
+**That's it!** No Python, Node.js, or any other installation required.
 
 ---
 
@@ -614,7 +613,7 @@ The checkbox is only enabled when there are unsaved changes. It clears automatic
 
 *Packaged Version:*
 1. **"ODBC Driver not found"**: Install ODBC Driver 17 or 18 for SQL Server from Microsoft (Driver 18 is included with SSMS 21)
-2. **Antivirus blocking**: Some antivirus may block .exe files - add an exception
+2. **Antivirus blocking**: The dashboard uses a bundled `python.exe` rather than custom executables, which avoids most antivirus false positives. If Windows Defender still blocks it, the folder may need to be added as an exclusion by IT.
 3. **Port in use**: Another application may be using port 8000 or 8001
 
 *Development Version:*
@@ -651,7 +650,7 @@ If you encounter issues not covered here:
 
 ### Packaged Version (End Users)
 ```
-1. Extract HEB-Waste-Dashboard.zip
+1. Extract HEB-Waste-Dashboard.zip to a local drive
 2. Double-click "Start Dashboard.bat"
 3. Enter username (e.g., john.d)
 4. Enter password
@@ -716,8 +715,9 @@ Note: When a row is marked Change, the entire Action cell background turns yello
 | Item | Path |
 |------|------|
 | Start Script | `HEB-Waste-Dashboard\Start Dashboard.bat` |
-| SQL Proxy | `HEB-Waste-Dashboard\sql_proxy.exe` |
-| Dashboard | `HEB-Waste-Dashboard\dashboard.exe` |
+| Python Runtime | `HEB-Waste-Dashboard\python\` |
+| SQL Proxy | `HEB-Waste-Dashboard\sql_proxy.py` |
+| Dashboard | `HEB-Waste-Dashboard\main.py` |
 | Config | `HEB-Waste-Dashboard\config.ini` |
 
 ### Development Version
@@ -742,5 +742,5 @@ Watch the SQL Proxy console for timing:
 
 *End of Training Guide*
 
-**Document Version:** 1.6
+**Document Version:** 1.7
 **For questions or updates, contact the Retail Insight team.**
