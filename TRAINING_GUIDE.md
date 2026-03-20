@@ -74,9 +74,9 @@ You will need your **ri-team** domain username and password to connect.
 
 ### Option A: Packaged Version (Recommended for End Users)
 
-If you received the dashboard as a zip file (HEB-Waste-Dashboard.zip):
+If you received the dashboard as a zip file (Waste-Tuning-Dashboard.zip):
 
-1. Extract the zip and copy the `HEB-Waste-Dashboard` folder to a **local drive** (e.g. `C:\Apps\WasteDashboard\`) — do not run from OneDrive or a network share
+1. Extract the zip and copy the `Waste-Tuning-Dashboard` folder to a **local drive** (e.g. `C:\Apps\WasteDashboard\`) — do not run from OneDrive or a network share
 2. **Double-click `Start Dashboard.bat`**
 3. Enter your **ri-team username** (e.g., `john.d`)
 4. Windows will prompt for your **domain password** - enter it
@@ -650,7 +650,7 @@ If you encounter issues not covered here:
 
 ### Packaged Version (End Users)
 ```
-1. Extract HEB-Waste-Dashboard.zip to a local drive
+1. Extract Waste-Tuning-Dashboard.zip to a local drive
 2. Double-click "Start Dashboard.bat"
 3. Enter username (e.g., john.d)
 4. Enter password
@@ -714,11 +714,11 @@ Note: When a row is marked Change, the entire Action cell background turns yello
 ### Packaged Version
 | Item | Path |
 |------|------|
-| Start Script | `HEB-Waste-Dashboard\Start Dashboard.bat` |
-| Python Runtime | `HEB-Waste-Dashboard\python\` |
-| SQL Proxy | `HEB-Waste-Dashboard\sql_proxy.py` |
-| Dashboard | `HEB-Waste-Dashboard\main.py` |
-| Config | `HEB-Waste-Dashboard\config.ini` |
+| Start Script | `Waste-Tuning-Dashboard\Start Dashboard.bat` |
+| Python Runtime | `Waste-Tuning-Dashboard\python\` |
+| SQL Proxy | `Waste-Tuning-Dashboard\sql_proxy.py` |
+| Dashboard | `Waste-Tuning-Dashboard\main.py` |
+| Config | `Waste-Tuning-Dashboard\config.ini` |
 
 ### Development Version
 | Item | Path |

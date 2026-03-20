@@ -392,13 +392,13 @@ The dashboard is distributed as a self-contained folder with a bundled Python ru
 1. Navigate to the `build` folder
 2. Run `build_all.bat`
 3. Wait for the build to complete (2-4 minutes)
-4. Distribution package will be in `dist/HEB-Waste-Dashboard/`
+4. Distribution package will be in `dist/Waste-Tuning-Dashboard/`
 
 ### Distribution Package
 
 The build creates a folder containing:
 ```
-HEB-Waste-Dashboard/
+Waste-Tuning-Dashboard/
 ├── Start Dashboard.bat    ← Users double-click this
 ├── run_proxy.bat          ← Launches SQL Proxy (called by launcher)
 ├── run_dashboard.bat      ← Launches Dashboard (called by launcher)
