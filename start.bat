@@ -1,13 +1,13 @@
 @echo off
 echo.
 echo ========================================
-echo    Azure SQL Dashboard Launcher
+echo    Waste Tuning Dashboard - Dev Launcher
 echo ========================================
 echo.
 echo This will guide you through starting all three services:
 echo   1. SQL Proxy (port 8001) - requires domain password
 echo   2. Backend API (port 8000)
-echo   3. Frontend Dashboard (port 5173)
+echo   3. Frontend Dashboard - SQL Preview Mode (port 5174)
 echo.
 echo ========================================
 echo.
@@ -23,7 +23,7 @@ echo.
 echo ========================================
 echo  WAIT for the SQL Proxy to fully start!
 echo.
-echo  Look for: "Uvicorn running on http://0.0.0.0:8001"
+echo  Look for: "Uvicorn running on http://127.0.0.1:8001"
 echo.
 echo  Once you see that message, press any key here...
 echo ========================================
@@ -39,8 +39,8 @@ echo Waiting for API to initialize (5 seconds)...
 timeout /t 5 /nobreak > nul
 
 echo.
-echo Step 3: Starting Frontend Dashboard...
-cd /d "%~dp0frontend"
+echo Step 3: Starting Frontend Dashboard (SQL Preview Mode)...
+cd /d "%~dp0frontend-preview"
 start "Frontend Dashboard" cmd /k "npm run dev"
 
 echo.
@@ -48,7 +48,7 @@ echo ========================================
 echo  SUCCESS! All services are starting.
 echo ========================================
 echo.
-echo  Open your browser to: http://localhost:5173
+echo  Open your browser to: http://localhost:5174
 echo.
 echo  (Wait a few seconds for the frontend to compile)
 echo.

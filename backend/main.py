@@ -84,11 +84,46 @@ class MarkSubmittedRequest(BaseModel):
     PPGClusterIDs: List[int]
 
 
+def ensure_tuning_session_table():
+    """Create config.TuningSession table if it does not already exist."""
+    sql = """
+IF NOT EXISTS (SELECT 1 FROM sys.schemas WHERE name = 'config')
+    EXEC('CREATE SCHEMA [config]');
+
+IF NOT EXISTS (
+    SELECT 1 FROM sys.objects
+    WHERE object_id = OBJECT_ID(N'[config].[TuningSession]') AND type = 'U'
+)
+BEGIN
+    CREATE TABLE [WASTE_HEB].[config].[TuningSession] (
+        VersionID      INT            NOT NULL,
+        PPGClusterID   INT            NOT NULL,
+        Action         NVARCHAR(50)   NOT NULL,
+        OperationType  NVARCHAR(50)   NULL,
+        ConfigValue    FLOAT          NULL,
+        Comment        NVARCHAR(MAX)  NULL,
+        SavedBy        NVARCHAR(256)  NULL,
+        SavedOnUTC     DATETIME       NULL,
+        IsSubmitted    BIT            NOT NULL DEFAULT 0,
+        SubmittedOnUTC DATETIME       NULL,
+        CONSTRAINT PK_TuningSession PRIMARY KEY (VersionID, PPGClusterID)
+    );
+    PRINT 'Created config.TuningSession table';
+END
+"""
+    try:
+        db.execute_batch_query(sql)
+        print("[OK] config.TuningSession table verified/created")
+    except Exception as e:
+        print(f"[WARN] Could not ensure config.TuningSession exists: {e}")
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     print("[*] Starting up Azure SQL Dashboard API...")
     try:
         db.connect()
+        ensure_tuning_session_table()
     except Exception as e:
         print(f"[WARN] Database connection failed: {e}")
         print("[WARN] API will still run - you can fix settings and restart")

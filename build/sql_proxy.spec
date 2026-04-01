@@ -1,4 +1,7 @@
 # -*- mode: python ; coding: utf-8 -*-
+# LEGACY — no longer used. Kept for reference only.
+# As of v1.7, the build uses a bundled Python embeddable package (build_all.bat)
+# instead of PyInstaller. This file is not referenced by any current build step.
 # PyInstaller spec file for SQL Proxy Service
 
 import os

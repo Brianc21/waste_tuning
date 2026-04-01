@@ -337,7 +337,7 @@ function ConflictModal({ isOpen, conflicts, onResolve }) {
 // =============================================================================
 // MarkdownTable
 // =============================================================================
-const MarkdownTable = forwardRef(function MarkdownTable({ data, loading, error, maxConfigVersion, activeConfigVersion }, ref) {
+const MarkdownTable = forwardRef(function MarkdownTable({ data, loading, error, maxConfigVersion, activeConfigVersion, onPreviewSql }, ref) {
   const [filterHierarchy4, setFilterHierarchy4] = useState('')
   const [filterHierarchy3, setFilterHierarchy3] = useState('')
   const [filterHierarchy2, setFilterHierarchy2] = useState('')
@@ -516,21 +516,52 @@ const MarkdownTable = forwardRef(function MarkdownTable({ data, loading, error, 
     if (!maxVersionID || !activeVersionID) { setSessionMessage({ type: 'error', text: 'Cannot reset: Version information is not available.' }); return }
     if (maxVersionID === activeVersionID) { alert('Max Version is Active Version. There are no planned changes to reset.'); return }
     const confirmed = window.confirm(
-      `⚠️ WARNING: This will permanently reset ALL planned changes for Version ${maxVersionID}.\n\n` +
-      `This will:\n• Make Version ${maxVersionID}'s config match the Active Version (${activeVersionID})\n` +
-      `• Delete all saved session data for Version ${maxVersionID}\n\nThis cannot be undone. Are you sure?`
+      `⚠️ SQL PREVIEW MODE: This will generate the SQL that would reset ALL planned changes for Version ${maxVersionID}.\n\n` +
+      `The SQL would:\n• Make Version ${maxVersionID}'s config match the Active Version (${activeVersionID})\n` +
+      `• Delete all saved session data for Version ${maxVersionID}\n\nGenerate the SQL preview?`
     )
     if (!confirmed) return
-    setSessionResetting(true); setSessionMessage(null)
-    try {
-      const response = await axios.delete(`${API_BASE_URL}/api/tuning-session/reset-all/${maxVersionID}/${activeVersionID}`)
-      if (response.data.success) {
-        setRowDecisions({}); setRowTuningConfigs({})
-        setSessionMessage({ type: 'success', text: `All planned changes for Version ${maxVersionID} have been reset to match Version ${activeVersionID}.` })
-      } else { setSessionMessage({ type: 'error', text: response.data.error || 'Failed to reset planned changes.' }) }
-    } catch (err) { setSessionMessage({ type: 'error', text: err.response?.data?.detail || err.message }) }
-    finally { setSessionResetting(false) }
-  }, [maxConfigVersion, activeConfigVersion])
+    const sql =
+`-- Step 1: Remove rows from Version ${maxVersionID} that differ from Active Version (${activeVersionID})
+DELETE FROM [WASTE_HEB].[config].[DefaultPercentage]
+WHERE VersionID = ${maxVersionID}
+  AND PPGClusterID IN (
+    SELECT m.PPGClusterID
+    FROM [WASTE_HEB].[config].[DefaultPercentage] m
+    LEFT JOIN [WASTE_HEB].[config].[DefaultPercentage] a
+        ON m.PPGClusterID = a.PPGClusterID AND a.VersionID = ${activeVersionID}
+    WHERE m.VersionID = ${maxVersionID}
+      AND (a.PPGClusterID IS NULL OR m.ConfigValue <> a.ConfigValue
+           OR m.ConfigOperationType <> a.ConfigOperationType)
+  )
+
+-- -----------------------------------------------------------
+
+-- Step 2: Copy matching rows from Active Version (${activeVersionID}) into Version ${maxVersionID}
+INSERT INTO [WASTE_HEB].[config].[DefaultPercentage]
+    (VersionID, PPGClusterID, ConfigOperationType, ConfigValue,
+     Comment, CreatedBy, CreatedOnUTC, UpdatedBy, UpdatedOnUTC)
+SELECT
+    ${maxVersionID} AS VersionID,
+    a.PPGClusterID, a.ConfigOperationType, a.ConfigValue,
+    a.Comment,
+    SYSTEM_USER AS CreatedBy, GETUTCDATE() AS CreatedOnUTC,
+    SYSTEM_USER AS UpdatedBy, GETUTCDATE() AS UpdatedOnUTC
+FROM [WASTE_HEB].[config].[DefaultPercentage] a
+WHERE a.VersionID = ${activeVersionID}
+  AND NOT EXISTS (
+    SELECT 1 FROM [WASTE_HEB].[config].[DefaultPercentage] m
+    WHERE m.PPGClusterID = a.PPGClusterID AND m.VersionID = ${maxVersionID}
+  )
+
+-- -----------------------------------------------------------
+
+-- Step 3: Clear saved session data for Version ${maxVersionID}
+DELETE FROM [WASTE_HEB].[config].[TuningSession]
+WHERE VersionID = ${maxVersionID}`
+    if (onPreviewSql) onPreviewSql(sql, 'Reset ALL Planned Changes')
+    setSessionMessage({ type: 'success', text: `SQL preview generated for resetting Version ${maxVersionID} to match Version ${activeVersionID}. Copy it from the preview window to execute manually.` })
+  }, [maxConfigVersion, activeConfigVersion, onPreviewSql])
 
   const uniqueValues = useMemo(() => {
     if (!data || data.length === 0) return {}

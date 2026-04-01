@@ -3,8 +3,8 @@
 
 ---
 
-**Version:** 1.7
-**Last Updated:** March 2026
+**Version:** 1.10
+**Last Updated:** April 2026
 **Internal Use Only** - Retail Insight / HEB Waste Management Team
 
 ---
@@ -16,10 +16,11 @@
 3. [Dashboard Overview](#3-dashboard-overview)
 4. [The Tuning Workflow](#4-the-tuning-workflow)
 5. [Tuning Actions](#5-tuning-actions)
-6. [Executing Custom Queries](#6-executing-custom-queries)
-7. [Settings & Configuration](#7-settings--configuration)
-8. [Best Practices](#8-best-practices)
-9. [Troubleshooting](#9-troubleshooting)
+6. [SQL Preview Mode](#6-sql-preview-mode)
+7. [Executing Custom Queries](#7-executing-custom-queries)
+8. [Settings & Configuration](#8-settings--configuration)
+9. [Best Practices](#9-best-practices)
+10. [Troubleshooting](#10-troubleshooting)
 
 ---
 
@@ -98,9 +99,9 @@ The dashboard requires **three services** to be running:
 |---------|------|---------|
 | SQL Proxy | 8001 | Handles database authentication |
 | Backend API | 8000 | Serves data and executes queries |
-| Frontend | 5173 | The web interface you interact with |
+| Frontend (SQL Preview Mode) | 5174 | The web interface — launched by `start.bat` |
 
-1. Navigate to the `azure-sql-dashboard` folder
+1. Navigate to the `waste_tuning` folder
 2. Double-click **`start.bat`**
 3. A window will open asking for your **ri-team username**
    - Enter your username (e.g., `john.d`)
@@ -111,13 +112,13 @@ The dashboard requires **three services** to be running:
 5. **Wait** for the SQL Proxy window to show: `Uvicorn running on http://127.0.0.1:8001`
 6. Press any key in the launcher window to continue
 7. The API and Frontend will start automatically
-8. Open your browser to: **http://localhost:5173**
+8. Open your browser to: **http://localhost:5174**
 
 ### Option C: Manual Start (If above options fail)
 
 **Step 1: Start the SQL Proxy**
 
-Open a Command Prompt in the `azure-sql-dashboard\backend` folder:
+Open a Command Prompt in the `waste_tuning\backend` folder:
 ```
 start_proxy.bat
 ```
@@ -128,7 +129,7 @@ start_proxy.bat
 
 **Step 2: Start the API Server**
 
-Open another Command Prompt in the `azure-sql-dashboard\backend` folder:
+Open another Command Prompt in the `waste_tuning\backend` folder:
 ```
 start_api.bat
 ```
@@ -137,18 +138,18 @@ start_api.bat
 
 **Step 3: Start the Frontend**
 
-Open PowerShell in the `azure-sql-dashboard\frontend` folder:
+Open PowerShell in the `waste_tuning\frontend-preview` folder:
 ```powershell
 npm run dev
 ```
-- Wait for: `Local: http://localhost:5173`
+- Wait for: `Local: http://localhost:5174`
 - Keep this window open
 
 **Step 4: Open the Dashboard**
 
 Open your browser and navigate to:
 ```
-http://localhost:5173
+http://localhost:5174
 ```
 
 ## 2.4 Verifying Connection
@@ -349,9 +350,13 @@ Your tuning decisions can be saved and resumed across browser sessions using the
 |--------|--------------|
 | **Refresh Data** | Reloads the markdown data from the database |
 | **Load Proposed Changes** | Fetches your previously saved decisions from the database. If any rows differ between your saved session and the current database config, a conflict resolution dialog appears so you can choose which values to keep row-by-row |
-| **Save Session** | Saves all current decisions (Leave/Change/Reset, operation, and value) to the database for the max config version |
+| **Save Session** | Saves all current decisions (Leave/Change/Reset, operation, and value) to the database for the max config version. Note: clicking "Tune Default Percentages" and executing also saves the tuned rows automatically, so a manual save before tuning is not required |
 | **Reset Unsaved Session Changes** | Discards any decisions you have made since your last save and reverts to the last saved session state |
 | **Reset ALL Planned Changes** | Permanently deletes all saved session data for the max version **and** resets its config entries to match the active version. Requires confirmation. Cannot be undone |
+
+**Automatic load on startup**
+
+When the dashboard first loads and the Max Version differs from the Active Version, it automatically fetches and applies your saved proposed changes in the background — no button press needed. If there are conflicts between the saved session and the current database state, the conflict resolution dialog will appear automatically. Use "Load Proposed Changes" to manually re-trigger this at any time during your session.
 
 **When is Load Proposed Changes available?**
 
@@ -389,6 +394,7 @@ Applies your tuning decisions to the database.
 **What it does:**
 - **Change rows**: Executes `config.csp_BulkConfigUpsertDefaultPercentage`
 - **Reset rows**: Deletes from `config.DefaultPercentage` table
+- **Session sync**: After executing, automatically saves all applied decisions (action, operation, value, and comment) to the `TuningSession` table and marks them as submitted — so the dashboard stays consistent on the next load even if you never manually clicked "Save Session"
 
 **The Modal:**
 - Shows separate tables for Change and Reset rows
@@ -410,9 +416,33 @@ Makes a version the active production configuration.
 
 ---
 
-# 6. Executing Custom Queries
+# 6. SQL Preview Mode
 
-## 6.1 The Execute Query Panel
+## 6.1 What Is SQL Preview Mode?
+
+The development version of the dashboard (`start.bat`) currently launches in **SQL Preview Mode**. In this mode the dashboard reads data from the database as normal, but the four write operations — Clone Config Version, Tune Default Percentages, Activate Config Version, and Reset ALL Planned Changes — **do not execute against the database**. Instead, they display the SQL that *would* be run in a copy-able window so it can be reviewed and executed manually.
+
+A yellow **"⚠️ SQL Preview Mode"** banner is shown at the top of every page to make it clear which version is running.
+
+## 6.2 Using the SQL Preview Window
+
+When you click Clone, Tune, Activate, or Reset All and confirm the action:
+
+1. The action modal closes.
+2. A dark-themed **SQL Preview** window opens showing the full SQL statement(s).
+3. Click **Copy SQL** to copy the text to your clipboard.
+4. Paste and run it in SQL Server Management Studio or another SQL client connected to `hebwmddev-sqlvm.ri-team.net`.
+5. Click **Close** to dismiss the preview window.
+
+## 6.3 Save Session in Preview Mode
+
+The **Save Session**, **Load Proposed Changes**, and **Reset Unsaved Session Changes** buttons still write to and read from the `config.TuningSession` table as normal — these are lightweight tracking operations that are not affected by Preview Mode.
+
+---
+
+# 7. Executing Custom Queries
+
+## 7.1 The Execute Query Panel
 
 Located near the bottom of the dashboard, this panel allows you to run SELECT queries.
 
@@ -422,7 +452,7 @@ Located near the bottom of the dashboard, this panel allows you to run SELECT qu
 - EXEC, EXECUTE
 - MERGE, GRANT, REVOKE
 
-## 6.2 Running a Query
+## 7.2 Running a Query
 
 1. Enter your SQL in the text box
 2. Click **"Run Query"**
@@ -440,13 +470,13 @@ SELECT TOP 10 * FROM [WASTE_HEB].wmd.ScalarFinalPercentage
 
 ---
 
-# 7. Settings & Configuration
+# 8. Settings & Configuration
 
-## 7.1 Accessing Settings
+## 8.1 Accessing Settings
 
 Click the **Settings** button (⚙️) in the header to open the Settings modal.
 
-## 7.2 Database Connection Tab
+## 8.2 Database Connection Tab
 
 View and modify your database connection settings:
 
@@ -458,7 +488,7 @@ View and modify your database connection settings:
 
 **Tip:** If the dashboard fails to connect, open Settings - it will still show the current configuration so you can fix any errors.
 
-## 7.3 Query Editor Tab
+## 8.3 Query Editor Tab
 
 View and modify the built-in SQL queries used by the dashboard.
 
@@ -490,22 +520,22 @@ The checkbox is only enabled when there are unsaved changes. It clears automatic
 
 ---
 
-# 8. Best Practices
+# 9. Best Practices
 
-## 8.1 Before Tuning
+## 9.1 Before Tuning
 
-✅ **Always clone first** - Never tune the active version directly  
-✅ **Filter carefully** - Make sure you're looking at the right data  
-✅ **Review decisions** - Check the summary counts before executing  
-✅ **Document changes** - Use meaningful comments  
+✅ **Always clone first** - Never tune the active version directly
+✅ **Filter carefully** - Make sure you're looking at the right data
+✅ **Review decisions** - Check the summary counts before executing
+✅ **Document changes** - Use meaningful comments
 
-## 8.2 During Tuning
+## 9.2 During Tuning
 
-✅ **Work in batches** - Don't try to tune everything at once  
+✅ **Work in batches** - Don't try to tune everything at once
 ✅ **Use "Show Only 'Change' rows"** - Focus on what you're modifying
-✅ **Double-check Reset rows** - These delete existing configs  
+✅ **Double-check Reset rows** - These delete existing configs
 
-## 8.3 After Tuning
+## 9.3 After Tuning
 
 ✅ **Verify changes** - Run a SELECT query to confirm  
 ✅ **Test before activating** - Ensure the new version works correctly  
@@ -513,9 +543,9 @@ The checkbox is only enabled when there are unsaved changes. It clears automatic
 
 ---
 
-# 9. Troubleshooting
+# 10. Troubleshooting
 
-## 9.1 Dashboard Won't Load
+## 10.1 Dashboard Won't Load
 
 **Symptom:** Browser shows error or blank page
 
@@ -533,7 +563,7 @@ The checkbox is only enabled when there are unsaved changes. It clears automatic
 3. Try refreshing the browser (Ctrl+F5)
 4. Restart all services
 
-## 9.2 "Server is not found or not accessible"
+## 10.2 "Server is not found or not accessible"
 
 **Symptom:** Cannot connect to database server
 
@@ -542,7 +572,7 @@ The checkbox is only enabled when there are unsaved changes. It clears automatic
 2. Test connectivity: Open Command Prompt and run `ping hebwmddev-sqlvm.ri-team.net`
 3. If ping fails, reconnect to VPN and try again
 
-## 9.3 "Connection Refused" Error
+## 10.3 "Connection Refused" Error
 
 **Symptom:** Red error messages about connection
 
@@ -552,7 +582,7 @@ The checkbox is only enabled when there are unsaved changes. It clears automatic
 3. Check Windows Firewall settings
 4. Ensure database server is accessible
 
-## 9.4 "Authentication Failed" Error
+## 10.4 "Authentication Failed" Error
 
 **Symptom:** Cannot connect to database
 
@@ -562,7 +592,7 @@ The checkbox is only enabled when there are unsaved changes. It clears automatic
 3. Verify your ri-team account has database permissions
 4. Contact IT if permissions need to be granted
 
-## 9.5 Dashboard Loads Slowly
+## 10.5 Dashboard Loads Slowly
 
 **Symptom:** Takes a long time to see data
 
@@ -578,7 +608,7 @@ The checkbox is only enabled when there are unsaved changes. It clears automatic
 [PERF] Batch complete: 10.39s (rows=105) ← Total time
 ```
 
-## 9.6 "Query Blocked" Error
+## 10.6 "Query Blocked" Error
 
 **Symptom:** Error when running a query in Execute Query panel
 
@@ -587,7 +617,7 @@ The checkbox is only enabled when there are unsaved changes. It clears automatic
 2. Use the Tuning Actions buttons for modifications
 3. Ensure your query starts with SELECT or WITH
 
-## 9.7 Table Data Not Loading
+## 10.7 Table Data Not Loading
 
 **Symptom:** "Current Default Markdowns" table is empty
 
@@ -597,7 +627,7 @@ The checkbox is only enabled when there are unsaved changes. It clears automatic
 3. Click the **"Refresh Data"** button below the table
 4. Restart the dashboard
 
-## 9.8 Settings Form is Empty
+## 10.8 Settings Form is Empty
 
 **Symptom:** Opening Settings shows blank fields
 
@@ -607,7 +637,7 @@ The checkbox is only enabled when there are unsaved changes. It clears automatic
 3. If the API is unreachable, enter the values manually
 4. Enter the connection values manually in the Settings form — do not edit `config.ini` directly, as doing so bypasses the query database-name update and will break all SQL queries
 
-## 9.9 Services Won't Start
+## 10.9 Services Won't Start
 
 **Symptom:** Error when running start scripts
 
@@ -621,7 +651,7 @@ The checkbox is only enabled when there are unsaved changes. It clears automatic
 2. **API won't start**: Same as above, check for port conflicts on 8000
 3. **Frontend won't start**: Check Node.js is installed, run `npm install` in frontend folder
 
-## 9.10 Getting Help
+## 10.10 Getting Help
 
 If you encounter issues not covered here:
 
@@ -665,7 +695,7 @@ If you encounter issues not covered here:
 3. Enter password
 4. Wait for proxy to show "running"
 5. Press any key to continue
-6. Open http://localhost:5173
+6. Open http://localhost:5174
 ```
 
 ## Service URLs
@@ -673,7 +703,7 @@ If you encounter issues not covered here:
 | Version | Dashboard URL |
 |---------|---------------|
 | Packaged | http://localhost:8000 |
-| Development | http://localhost:5173 |
+| Development | http://localhost:5174 |
 
 | Service | URL |
 |---------|-----|
@@ -723,11 +753,11 @@ Note: When a row is marked Change, the entire Action cell background turns yello
 ### Development Version
 | Item | Path |
 |------|------|
-| Start Script | `azure-sql-dashboard\start.bat` |
-| Proxy Script | `azure-sql-dashboard\backend\start_proxy.bat` |
-| API Script | `azure-sql-dashboard\backend\start_api.bat` |
-| Config | `azure-sql-dashboard\backend\config.ini` |
-| Frontend | `azure-sql-dashboard\frontend\` |
+| Start Script | `waste_tuning\start.bat` |
+| Proxy Script | `waste_tuning\backend\start_proxy.bat` |
+| API Script | `waste_tuning\backend\start_api.bat` |
+| Config | `waste_tuning\backend\config.ini` |
+| Frontend | `waste_tuning\frontend\` |
 
 ## Performance Monitoring
 
@@ -742,5 +772,5 @@ Watch the SQL Proxy console for timing:
 
 *End of Training Guide*
 
-**Document Version:** 1.7
+**Document Version:** 1.10
 **For questions or updates, contact the Retail Insight team.**

@@ -12,6 +12,10 @@ This folder contains the build scripts for creating a distributable package of t
 
 ## Building
 
+There are two separate build scripts — one for each frontend version.
+
+### Live (Write-Mode) Build
+
 1. Open a Command Prompt in this folder
 2. Run:
    ```
@@ -20,17 +24,31 @@ This folder contains the build scripts for creating a distributable package of t
 3. Wait for the build to complete (2-4 minutes)
 4. The distribution package will be in: `dist\Waste-Tuning-Dashboard\`
 
+### SQL Preview Mode Build
+
+1. Open a Command Prompt in this folder
+2. Run:
+   ```
+   build_preview.bat
+   ```
+3. Wait for the build to complete (2-4 minutes)
+4. The distribution package will be in: `dist\Waste-Tuning-Dashboard-Preview\`
+
+Both builds can coexist in the `dist\` folder at the same time — they output to separate subfolders.
+
 ## What Gets Built
 
-The build script:
-1. Builds the React frontend to static files
-2. Downloads the Python embeddable package matching your build machine's Python version
-3. Configures the Python runtime's path file (`._pth`) so bundled packages and local scripts are found
-4. Installs all Python dependencies into the bundled runtime
-5. Copies the Python scripts and static assets into the distribution folder
-6. Generates `run_proxy.bat` and `run_dashboard.bat` helper scripts
+Both build scripts follow the same steps:
+1. Build the React frontend to static files
+2. Download the Python embeddable package matching the build machine's Python version
+3. Configure the Python runtime's path file (`._pth`) so bundled packages and local scripts are found
+4. Install all Python dependencies into the bundled runtime
+5. Copy the Python scripts and static assets into the distribution folder
+6. Generate `run_proxy.bat` and `run_dashboard.bat` helper scripts
 
 ## Distribution Package Contents
+
+### Live Build (`dist\Waste-Tuning-Dashboard\`)
 
 ```
 Waste-Tuning-Dashboard/
@@ -52,7 +70,29 @@ Waste-Tuning-Dashboard/
 └── README.txt             ← Quick start guide for users
 ```
 
-Note: `config.ini` is NOT included — it is created automatically on first run.
+### SQL Preview Mode Build (`dist\Waste-Tuning-Dashboard-Preview\`)
+
+```
+Waste-Tuning-Dashboard-Preview/
+├── Start Dashboard.bat    ← Users double-click this
+├── run_proxy.bat          ← Launches SQL Proxy with bundled Python (called by launcher)
+├── run_dashboard.bat      ← Launches Dashboard with bundled Python (called by launcher)
+├── python/                ← Bundled Python runtime (no install needed)
+│   ├── python.exe
+│   ├── python3xx._pth     ← Configured to find bundled packages and local scripts
+│   └── Lib/
+│       └── site-packages/ ← All pip dependencies
+├── sql_proxy.py           ← Database authentication service
+├── main.py                ← API + Frontend server
+├── db_proxy.py            ← Database proxy client
+├── static/                ← SQL Preview Mode web interface files
+│   ├── index.html
+│   └── assets/
+├── queries.json           ← Built-in SQL queries for the Query Editor
+└── README.txt             ← Quick start guide for users
+```
+
+Note: `config.ini` is NOT included in either build — it is created automatically on first run.
 
 ## End User Requirements
 
@@ -69,16 +109,26 @@ Users DO need:
 
 ## Distributing
 
+**Live build:**
 1. Zip the `dist\Waste-Tuning-Dashboard` folder
 2. Send to users
 3. Users extract to a local drive and double-click "Start Dashboard.bat"
 
-No certificate import or other first-time setup steps are required.
+**SQL Preview Mode build:**
+1. Zip the `dist\Waste-Tuning-Dashboard-Preview` folder
+2. Send to users
+3. Users extract to a local drive and double-click "Start Dashboard.bat"
+
+No certificate import or other first-time setup steps are required for either build.
 
 ## Build Files
 
-- `build_all.bat` — Main build script
-- `launcher_template.bat` — Template copied to `Start Dashboard.bat` in the dist folder
+- `build_all.bat` — Builds the **live / write-mode** distribution from `frontend/` → `dist\Waste-Tuning-Dashboard\`
+- `build_preview.bat` — Builds the **SQL Preview Mode** distribution from `frontend-preview/` → `dist\Waste-Tuning-Dashboard-Preview\`
+- `launcher_template.bat` — Template copied to `Start Dashboard.bat` in both dist folders
+- `config_template.ini` — Reference for default database connection values (not copied by the build; `config.ini` is created at runtime by the launcher)
+- `dashboard.spec` *(legacy)* — PyInstaller spec kept for reference; not used since v1.7
+- `sql_proxy.spec` *(legacy)* — PyInstaller spec kept for reference; not used since v1.7
 
 ## Troubleshooting Build Issues
 

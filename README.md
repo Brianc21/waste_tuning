@@ -5,7 +5,8 @@ A full-stack dashboard for managing and tuning HEB waste markdown configurations
 ## Architecture
 
 ```
-React Dashboard (Port 5173 dev / Port 8000 packaged)
+React Dashboard — SQL Preview Mode (Port 5174 dev)  ← launched by start.bat
+React Dashboard — Live / Write Mode   (Port 5173 dev)  ← launched manually from frontend/
     ↓ HTTP/REST
 FastAPI Backend (Port 8000)
     ↓ HTTP/REST
@@ -26,16 +27,24 @@ Azure SQL Server (hebwmddev-sqlvm.ri-team.net)
 - Parameterized queries to prevent SQL injection
 - Auto-generated API documentation at `/docs`
 
-### Frontend (React + Vite)
-- Clean, modern dashboard UI tailored for HEB Waste Tuning
+### Frontend (React + Vite) — Two Versions
+
+**`frontend/` — Live / Write Mode** (port 5173)
+The original version that writes directly to SQL Server.
 - **Config Version Management**: View active and max config versions
-- **Tuning Actions**: One-click buttons for common operations
-  - Clone Config Version (with direct execution)
-  - Tune Default Percentages (with direct execution)
+- **Tuning Actions**: One-click buttons that execute directly against the database
+  - Clone Config Version
+  - Tune Default Percentages
   - Activate Config Version (with confirmation dialog)
 - **Execute SELECT queries** with real-time results (protected - SELECT only)
 - **Settings Modal** with database configuration (auto-populates even on connection failure)
 - Quick example queries for reference
+
+**`frontend-preview/` — SQL Preview Mode** (port 5174, launched by `start.bat`)
+A read-only variant for reviewing changes before they are executed. Identical to the live version except:
+- **Clone Config Version**, **Tune Default Percentages**, **Activate Config Version**, and **Reset ALL Planned Changes** show the SQL that *would* be executed in a dark-themed copy-able modal — nothing is written to the database
+- A yellow **"⚠️ SQL Preview Mode"** banner is shown at the top of every page
+- The **Execute Query** and **Quick Examples** sections are removed (SQL execution from those panels is not needed in preview mode)
 
 ### Security Features
 - **Dynamic authentication**: Prompts for username at startup (format: `firstname.lastinitial`, e.g., `john.d`)
@@ -107,7 +116,9 @@ This will:
 3. **Wait** for the proxy to show "Uvicorn running on http://127.0.0.1:8001"
 4. Press any key in the launcher to continue
 5. The API and Frontend will start automatically
-6. Open your browser to: **http://localhost:5173**
+6. Open your browser to: **http://localhost:5174** (SQL Preview Mode)
+
+> **Note:** `start.bat` launches the SQL Preview frontend (`frontend-preview/`, port 5174). To run the live write-mode frontend instead, start it manually from the `frontend/` folder with `npm run dev` and open `http://localhost:5173`.
 
 ## Manual Setup Instructions
 
@@ -115,7 +126,7 @@ This will:
 
 Navigate to the backend directory:
 ```bash
-cd Documents/azure-sql-dashboard/backend
+cd waste_tuning\backend
 ```
 
 A `config.ini` file will be auto-created with default settings on first run. To configure the database connection, use the Settings menu in the dashboard after starting the services (see Step 4 below).
@@ -157,7 +168,7 @@ The API will be available at:
 
 Open a new terminal and navigate to the frontend directory:
 ```bash
-cd Documents/azure-sql-dashboard/frontend
+cd waste_tuning\frontend
 ```
 
 Install dependencies:
@@ -190,9 +201,10 @@ The main tuning interface displays markdown percentages across all PPG Clusters:
 6. **Focus View**: Use filter checkboxes to show/hide rows by decision type
 7. **Track Progress**: Watch the decision summary counts update in real-time
 8. **Save Session**: Click "Save Session" to persist decisions to the database so they can be resumed later
-9. **Load Proposed Changes**: Click "Load Proposed Changes" to restore a previously saved session; if the database config has changed since you saved, a conflict resolution dialog appears
-10. **Execute Tuning**: Click "Tune Default Percentages" button to open the tuning modal
-11. **Review & Execute**: Review your selections in the modal (separate tables for Change and Reset rows) and click "Tune" to execute
+9. **Auto-load on startup**: When the dashboard first loads and the Max Version differs from the Active Version, proposed changes are automatically loaded from the session table in the background (silent, no prompt). Use "Load Proposed Changes" to manually re-load at any time
+10. **Load Proposed Changes**: Click "Load Proposed Changes" to manually reload a previously saved session; if the database config has changed since you saved, a conflict resolution dialog appears
+11. **Execute Tuning**: Click "Tune Default Percentages" button to open the tuning modal
+12. **Review & Execute**: Review your selections in the modal (separate tables for Change and Reset rows) and click "Tune" to execute
 
 ### Tuning Actions
 
@@ -342,7 +354,7 @@ Frontend: `npm install`
 ## Project Structure
 
 ```
-azure-sql-dashboard/
+waste_tuning/
 ├── backend/
 │   ├── main.py              # FastAPI application
 │   ├── db_proxy.py          # Database proxy client (talks to sql_proxy)
@@ -354,7 +366,7 @@ azure-sql-dashboard/
 │   ├── start_api.bat        # Start main API server
 │   ├── start_proxy.bat      # Start SQL proxy (prompts for username)
 │   └── static/              # Built frontend files (for packaged version)
-├── frontend/
+├── frontend/                # Live / write-mode frontend (port 5173)
 │   ├── src/
 │   │   ├── App.jsx          # Main React component with modals
 │   │   ├── MarkdownTable.jsx # Interactive data grid with tuning workflow
@@ -363,14 +375,28 @@ azure-sql-dashboard/
 │   │   ├── main.jsx         # React entry point
 │   │   └── index.css        # Styles
 │   ├── index.html
-│   ├── vite.config.js
+│   ├── vite.config.js       # Builds to backend/static/
+│   └── package.json
+├── frontend-preview/        # SQL Preview Mode frontend (port 5174, launched by start.bat)
+│   ├── src/
+│   │   ├── App.jsx          # Preview variant — Clone/Tune/Activate/Reset show SQL modal
+│   │   ├── MarkdownTable.jsx # Same as live except Reset All shows SQL instead of executing
+│   │   ├── SettingsModal.jsx # (shared, identical to live version)
+│   │   ├── queries.js       # (shared, identical to live version)
+│   │   ├── main.jsx         # React entry point
+│   │   └── index.css        # Styles
+│   ├── index.html
+│   ├── vite.config.js       # Builds to backend/static-preview/
 │   └── package.json
 ├── build/                   # Build scripts for distribution
 │   ├── build_all.bat        # Main build script
-│   └── launcher_template.bat # Template for user launcher
+│   ├── launcher_template.bat # Template for user launcher (Start Dashboard.bat)
+│   ├── config_template.ini  # Reference for default DB connection values
+│   ├── dashboard.spec       # (Legacy) PyInstaller spec — not used since v1.7
+│   └── sql_proxy.spec       # (Legacy) PyInstaller spec — not used since v1.7
 ├── dist/                    # Distribution output folder
 ├── setup.bat                # One-click dependency setup
-├── start.bat                # One-click launch script
+├── start.bat                # One-click dev launch script
 ├── README.md                # This file
 ├── TRAINING_GUIDE.md        # User training documentation
 ├── QUICKSTART.md            # Quick setup guide
@@ -449,6 +475,16 @@ See `build/BUILD_README.md` for detailed build instructions.
 - Axios - HTTP client
 
 ## Recent Updates
+
+### Version 1.10 (April 2026)
+- **SQL Preview Mode frontend** (`frontend-preview/`): A second frontend variant that intercepts Clone Config Version, Tune Default Percentages, Activate Config Version, and Reset ALL Planned Changes — instead of executing these against the database, it generates the SQL and displays it in a dark-themed copy-able modal for manual review. The Execute Query and Quick Examples sections are omitted. A yellow banner on every page makes it clear which mode is active.
+- **`start.bat` updated**: The development launcher now starts `frontend-preview/` on port 5174 instead of `frontend/` on port 5173. To run the live write-mode frontend, start it manually from the `frontend/` directory.
+
+### Version 1.9 (April 2026)
+- **Auto-create `config.TuningSession` on startup**: The API now checks at startup whether the `config.TuningSession` table exists and creates it (along with the `config` schema if needed) when it does not. Previously, a missing table caused all four tuning session endpoints to return errors, and the `reset-all` endpoint would partially execute — modifying `DefaultPercentage` rows before failing on the session cleanup. No manual table setup is required on new databases.
+
+### Version 1.8 (March 2026)
+- **Bug fix — TuningSession not saved on tune**: "Tune Default Percentages" previously only called `mark-submitted` after executing, which runs an `UPDATE` on existing `TuningSession` rows. If the user never clicked "Save Session" first, no rows existed to update, so `TuningSession` stayed empty. On the next dashboard load the conflicts endpoint would see the DB had changed but the session table was empty, producing false discrepancies. The fix upserts the full tuning config (action, operation type, value, and comment) into `TuningSession` before marking the rows as submitted, ensuring the session table is always consistent with the applied changes regardless of whether the user explicitly saved the session beforehand.
 
 ### Version 1.7 (March 2026)
 - **Deployment overhaul**: Replaced PyInstaller EXE packaging with a bundled Python embeddable runtime. The distribution now ships `.py` scripts alongside a self-contained `python/` folder rather than compiled executables. This eliminates Windows Defender / antivirus false positives that were blocking `sql_proxy.exe` on some machines.
